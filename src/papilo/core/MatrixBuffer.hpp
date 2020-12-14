@@ -39,13 +39,13 @@ template <typename REAL>
 struct MatrixEntry
 {
    REAL val;
-   int row;
-   int col;
+   int64_t row;
+   int64_t col;
 
    struct TreeHook
    {
-      int left;
-      int right;
+      int64_t left;
+      int64_t right;
    };
 
    TreeHook row_major;
@@ -53,7 +53,7 @@ struct MatrixEntry
 
    MatrixEntry() {}
 
-   MatrixEntry( int row, int col, const REAL& val )
+   MatrixEntry( int64_t row, int64_t col, const REAL& val )
        : val( val ), row( row ), col( col )
    {
       row_major.left = 0;
@@ -73,7 +73,7 @@ struct MatrixBuffer
 {
    template <bool RowMajor>
    int
-   splay( int n, int t )
+   splay( int64_t n, int64_t t )
    {
       using Node = GetNodeProperty<RowMajor>;
 
@@ -82,15 +82,15 @@ struct MatrixBuffer
 
       assert( t != 0 );
 
-      int l = 0;
-      int r = 0;
-      int y;
+      int64_t l = 0;
+      int64_t r = 0;
+      int64_t y;
 
       for( ;; )
       {
          if( Node::lesser( entries[n], entries[t] ) )
          {
-            int t_left = Node::left( entries[t] );
+            int64_t t_left = Node::left( entries[t] );
             if( t_left == 0 )
                break;
             if( Node::lesser( entries[n], entries[t_left] ) )
@@ -112,7 +112,7 @@ struct MatrixBuffer
          }
          else
          {
-            int t_right = Node::right( entries[t] );
+            int64_t t_right = Node::right( entries[t] );
             if( t_right == 0 )
                break;
             if( Node::lesser( entries[t_right], entries[n] ) )
@@ -148,7 +148,7 @@ struct MatrixBuffer
 
    template <bool RowMajor>
    void
-   splay_insert( int n, int t )
+   splay_insert( int64_t n, int64_t t )
    {
       using Node = GetNodeProperty<RowMajor>;
 
@@ -171,13 +171,13 @@ struct MatrixBuffer
    /// link node n into the tree for the given storage order
    template <bool RowMajor>
    void
-   link( int n )
+   link( int64_t n )
    {
       using Node = GetNodeProperty<RowMajor>;
 
       // currnode is the pointer of the parent node
       // where n will be inserted, starting with the root pointer
-      int* currnode = &Node::root( this );
+      int64_t* currnode = &Node::root( this );
 
       // get priority of n
       uint32_t prio = Node::priority( entries[n] );
@@ -194,7 +194,7 @@ struct MatrixBuffer
             // if we found a node with a smaller priority we do
             // a top down splay to make n the root of this sub tree
             // and stop insertion here.
-            int t = splay<RowMajor>( n, *currnode );
+            int64_t t = splay<RowMajor>( n, *currnode );
 
             // make n the new root
             if( Node::lesser( entries[n], entries[t] ) )
@@ -240,9 +240,9 @@ struct MatrixBuffer
    }
 
    void
-   addEntry( int row, int col, const REAL& val )
+   addEntry( int64_t row, int64_t col, const REAL& val )
    {
-      int n = entries.size();
+      int64_t n = entries.size();
       entries.emplace_back( row, col, val );
 
       this->template link<true>( n );
@@ -251,12 +251,12 @@ struct MatrixBuffer
 
    template <bool RowMajor>
    MatrixEntry<REAL>*
-   findEntry( int row, int col )
+   findEntry( int64_t row, int64_t col )
    {
       using Node = GetNodeProperty<RowMajor>;
       MatrixEntry<REAL> entry( row, col, REAL{ 0 } );
 
-      int k = Node::root( this );
+      int64_t k = Node::root( this );
 
       while( k != 0 )
       {
@@ -276,7 +276,7 @@ struct MatrixBuffer
    }
 
    void
-   addEntrySafe( int row, int col, const REAL& val )
+   addEntrySafe( int64_t row, int64_t col, const REAL& val )
    {
       MatrixEntry<REAL>* entry = findEntry<true>( row, col );
 
@@ -295,7 +295,7 @@ struct MatrixBuffer
       stack.clear();
       stack.push_back( 0 );
 
-      int k = Node::root( this );
+      int64_t k = Node::root( this );
 
       while( k != 0 )
       {
@@ -308,14 +308,14 @@ struct MatrixBuffer
 
    template <bool RowMajor>
    const MatrixEntry<REAL>*
-   beginStart( SmallVec<int, 32>& stack, int row, int col ) const
+   beginStart( SmallVec<int, 32>& stack, int64_t row, int64_t col ) const
    {
       using Node = GetNodeProperty<RowMajor>;
 
       stack.clear();
       stack.push_back( 0 );
 
-      int k = Node::root( this );
+      int64_t k = Node::root( this );
 
       assert( row == -1 || col == -1 );
 
@@ -343,7 +343,7 @@ struct MatrixBuffer
    {
       using Node = GetNodeProperty<RowMajor>;
 
-      int k = stack.back();
+      int64_t k = stack.back();
       stack.pop_back();
 
       k = Node::right( entries[k] );
@@ -363,7 +363,7 @@ struct MatrixBuffer
    }
 
    void
-   reserve( int nnz )
+   reserve( int64_t nnz )
    {
       entries.reserve( nnz + 1 );
    }
@@ -375,7 +375,7 @@ struct MatrixBuffer
    }
 
    void
-   addBadgeEntry( int row, int col, const REAL& val )
+   addBadgeEntry( int64_t row, int64_t col, const REAL& val )
    {
       assert( badge_start >= 0 && badge_start <= entries.size() );
       entries.emplace_back( row, col, val );
@@ -394,7 +394,7 @@ struct MatrixBuffer
    {
       assert( badge_start >= 0 && badge_start <= entries.size() );
 
-      for( int i = badge_start; i != entries.size(); ++i )
+      for( int64_t i = badge_start; i != entries.size(); ++i )
       {
          this->template link<true>( i );
          this->template link<false>( i );
@@ -411,11 +411,11 @@ struct MatrixBuffer
 
    SparseStorage<REAL>
    buildCSR(
-       int nrows, int ncols,
+       int64_t nrows, int64_t ncols,
        double spareRatio = SparseStorage<REAL>::DEFAULT_SPARE_RATIO,
-       int mininterrowspace = SparseStorage<REAL>::DEFAULT_MIN_INTER_ROW_SPACE )
+       int64_t mininterrowspace = SparseStorage<REAL>::DEFAULT_MIN_INTER_ROW_SPACE )
    {
-      int nnz = getNnz();
+      int64_t nnz = getNnz();
 
       SparseStorage<REAL> csrStorage( nrows, ncols, nnz, spareRatio,
                                       mininterrowspace );
@@ -423,15 +423,15 @@ struct MatrixBuffer
       SmallVec<int, 32> stack;
 
       REAL* values = csrStorage.getValues();
-      int* columns = csrStorage.getColumns();
+      int64_t* columns = csrStorage.getColumns();
       IndexRange* rowranges = csrStorage.getRowRanges();
 
       const MatrixEntry<REAL>* it = this->begin<true>( stack );
       const MatrixEntry<REAL>* end = this->end();
 
-      int k = 0;
+      int64_t k = 0;
 
-      for( int i = 0; i != nrows; ++i )
+      for( int64_t i = 0; i != nrows; ++i )
       {
          rowranges[i].start = k;
 
@@ -449,7 +449,7 @@ struct MatrixBuffer
 
          if( k != rowranges[i].start )
          {
-            int rowsize = k - rowranges[i].start;
+            int64_t rowsize = k - rowranges[i].start;
             k += csrStorage.computeRowAlloc( rowsize ) - rowsize;
          }
       }
@@ -462,11 +462,11 @@ struct MatrixBuffer
 
    SparseStorage<REAL>
    buildCSC(
-       int nrows, int ncols,
+       int64_t nrows, int64_t ncols,
        double spareRatio = SparseStorage<REAL>::DEFAULT_SPARE_RATIO,
-       int minintercolspace = SparseStorage<REAL>::DEFAULT_MIN_INTER_ROW_SPACE )
+       int64_t minintercolspace = SparseStorage<REAL>::DEFAULT_MIN_INTER_ROW_SPACE )
    {
-      int nnz = getNnz();
+      int64_t nnz = getNnz();
 
       SparseStorage<REAL> cscStorage( ncols, nrows, nnz, spareRatio,
                                       minintercolspace );
@@ -474,15 +474,15 @@ struct MatrixBuffer
       SmallVec<int, 32> stack;
 
       REAL* values = cscStorage.getValues();
-      int* rows = cscStorage.getColumns();
+      int64_t* rows = cscStorage.getColumns();
       IndexRange* colranges = cscStorage.getRowRanges();
 
       const MatrixEntry<REAL>* it = this->begin<false>( stack );
       const MatrixEntry<REAL>* end = this->end();
 
-      int k = 0;
+      int64_t k = 0;
 
-      for( int i = 0; i != ncols; ++i )
+      for( int64_t i = 0; i != ncols; ++i )
       {
          colranges[i].start = k;
 
@@ -500,7 +500,7 @@ struct MatrixBuffer
 
          if( k != colranges[i].start )
          {
-            int colsize = k - colranges[i].start;
+            int64_t colsize = k - colranges[i].start;
             k += cscStorage.computeRowAlloc( colsize ) - colsize;
          }
       }
@@ -521,9 +521,9 @@ struct MatrixBuffer
       entries.emplace_back( -1, -1, 0 );
    }
 
-   int badge_start = -1;
-   int row_major_root;
-   int col_major_root;
+   int64_t badge_start = -1;
+   int64_t row_major_root;
+   int64_t col_major_root;
    Vec<MatrixEntry<REAL>> entries;
 };
 
@@ -546,42 +546,42 @@ struct GetNodeProperty<true>
    }
 
    template <typename REAL>
-   static int&
+   static int64_t&
    left( MatrixEntry<REAL>& e )
    {
       return e.row_major.left;
    }
 
    template <typename REAL>
-   static int&
+   static int64_t&
    right( MatrixEntry<REAL>& e )
    {
       return e.row_major.right;
    }
 
    template <typename REAL>
-   static int&
+   static int64_t&
    root( MatrixBuffer<REAL>* thisptr )
    {
       return thisptr->row_major_root;
    }
 
    template <typename REAL>
-   static const int&
+   static const int64_t&
    left( const MatrixEntry<REAL>& e )
    {
       return e.row_major.left;
    }
 
    template <typename REAL>
-   static const int&
+   static const int64_t&
    right( const MatrixEntry<REAL>& e )
    {
       return e.row_major.right;
    }
 
    template <typename REAL>
-   static const int&
+   static const int64_t&
    root( const MatrixBuffer<REAL>* thisptr )
    {
       return thisptr->row_major_root;
@@ -608,42 +608,42 @@ struct GetNodeProperty<false>
    }
 
    template <typename REAL>
-   static int&
+   static int64_t&
    left( MatrixEntry<REAL>& e )
    {
       return e.col_major.left;
    }
 
    template <typename REAL>
-   static int&
+   static int64_t&
    right( MatrixEntry<REAL>& e )
    {
       return e.col_major.right;
    }
 
    template <typename REAL>
-   static int&
+   static int64_t&
    root( MatrixBuffer<REAL>* thisptr )
    {
       return thisptr->col_major_root;
    }
 
    template <typename REAL>
-   static const int&
+   static const int64_t&
    left( const MatrixEntry<REAL>& e )
    {
       return e.col_major.left;
    }
 
    template <typename REAL>
-   static const int&
+   static const int64_t&
    right( const MatrixEntry<REAL>& e )
    {
       return e.col_major.right;
    }
 
    template <typename REAL>
-   static const int&
+   static const int64_t&
    root( const MatrixBuffer<REAL>* thisptr )
    {
       return thisptr->col_major_root;

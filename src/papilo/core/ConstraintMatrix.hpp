@@ -50,7 +50,7 @@ class SparseVectorView
    SparseVectorView<REAL>&
    operator=( const SparseVectorView<REAL>& ) = default;
 
-   SparseVectorView( const REAL* vals, const int* inds, int len )
+   SparseVectorView( const REAL* vals, const int64_t* inds, int64_t len )
        : vals( vals ), indices( inds ), len( len )
    {
    }
@@ -61,7 +61,7 @@ class SparseVectorView
       return vals;
    }
 
-   const int*
+   const int64_t*
    getIndices() const
    {
       return indices;
@@ -78,7 +78,7 @@ class SparseVectorView
    {
       REAL maxabsval = 0.0;
 
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
          maxabsval = std::max( REAL( abs( vals[i] ) ), maxabsval );
 
       return maxabsval;
@@ -89,7 +89,7 @@ class SparseVectorView
    {
       REAL minabsval;
 
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
       {
          if( i == 0 )
             minabsval = abs( vals[0] );
@@ -108,7 +108,7 @@ class SparseVectorView
          REAL maxabsval = abs( vals[0] );
          REAL minabsval = maxabsval;
 
-         for( int i = 1; i != len; ++i )
+         for( int64_t i = 1; i != len; ++i )
          {
             maxabsval = std::max( REAL( abs( vals[i] ) ), maxabsval );
             minabsval = std::min( REAL( abs( vals[i] ) ), minabsval );
@@ -128,7 +128,7 @@ class SparseVectorView
          REAL maxabsval = abs( vals[0] );
          REAL minabsval = maxabsval;
 
-         for( int i = 1; i != len; ++i )
+         for( int64_t i = 1; i != len; ++i )
          {
             maxabsval = Num<REAL>::max( abs( vals[i] ), maxabsval );
             minabsval = Num<REAL>::min( abs( vals[i] ), minabsval );
@@ -142,8 +142,8 @@ class SparseVectorView
 
  private:
    const REAL* vals;
-   const int* indices;
-   int len;
+   const int64_t* indices;
+   int64_t len;
 };
 
 /// type representing the constraint matrix including the left and right hand
@@ -178,12 +178,12 @@ class ConstraintMatrix
       // rowranges[i].end);
       //}
 
-      for( int i = 0; i < cons_matrix.getNRows(); ++i )
+      for( int64_t i = 0; i < cons_matrix.getNRows(); ++i )
          rowsize.push_back( rowranges[i].end - rowranges[i].start );
 
       auto colranges = cons_matrix_transp.getRowRanges();
 
-      for( int i = 0; i < cons_matrix.getNCols(); ++i )
+      for( int64_t i = 0; i < cons_matrix.getNCols(); ++i )
          colsize.push_back( colranges[i].end - colranges[i].start );
    }
 
@@ -222,7 +222,7 @@ class ConstraintMatrix
                              cons_matrix.getNRows() );
    }
 
-   const int*
+   const int64_t*
    getColumns() const
    {
       return cons_matrix.getColumns();
@@ -231,7 +231,7 @@ class ConstraintMatrix
    /// returns a sparse vector view on the row coefficients and their column
    /// indices
    SparseVectorView<REAL>
-   getRowCoefficients( int r ) const
+   getRowCoefficients( int64_t r ) const
    {
       assert( r >= 0 && r < getNRows() );
 
@@ -246,7 +246,7 @@ class ConstraintMatrix
    /// returns a sparse vector view on the column coefficients and their row
    /// indices
    SparseVectorView<REAL>
-   getColumnCoefficients( int c ) const
+   getColumnCoefficients( int64_t c ) const
    {
       assert( c >= 0 && c < getNCols() );
 
@@ -261,7 +261,7 @@ class ConstraintMatrix
    /// returns maximal change of constraint feasibility for the given change of
    /// value in the given column
    REAL
-   getMaxFeasChange( int col, const REAL& val ) const
+   getMaxFeasChange( int64_t col, const REAL& val ) const
    {
       return abs( val * getColumnCoefficients( col ).getMaxAbsValue() );
    }
@@ -309,7 +309,7 @@ class ConstraintMatrix
    /// modify the value of an element from the left hand side
    template <bool infval = false>
    void
-   modifyLeftHandSide( const int index, const REAL& value = 0 )
+   modifyLeftHandSide( const int64_t index, const REAL& value = 0 )
    {
       assert( index >= 0 );
       assert( index < getNRows() );
@@ -334,7 +334,7 @@ class ConstraintMatrix
    /// modify the value of an element from the right hand side
    template <bool infval = false>
    void
-   modifyRightHandSide( const int index, const REAL& value = 0 )
+   modifyRightHandSide( const int64_t index, const REAL& value = 0 )
    {
       assert( index >= 0 );
       assert( index < getNRows() );
@@ -358,14 +358,14 @@ class ConstraintMatrix
 
    /// mark given row as redundant
    void
-   markRowRedundant( const int row )
+   markRowRedundant( const int64_t row )
    {
       flags[row].set( RowFlag::kRedundant );
    }
 
    /// is given row redundant
    bool
-   isRowRedundant( const int row ) const
+   isRowRedundant( const int64_t row ) const
    {
       return flags[row].test( RowFlag::kRedundant );
    }
@@ -380,7 +380,7 @@ class ConstraintMatrix
 
    /// returns reference to the row indices of the
    /// column-wise matrix (cons_matrix_transp) for solvers
-   const int*
+   const int64_t*
    getTransposeRowIndices() const
    {
       return cons_matrix_transp.getColumns();
@@ -388,7 +388,7 @@ class ConstraintMatrix
 
    /// returns reference to a sequence containin the start indices
    /// of the columns in the column-wise matrix (cons_matrix_transp)
-   Vec<int>
+   Vec<int64_t>
    getTransposeColStart() const
    {
       return cons_matrix_transp.getRowStarts();
@@ -400,34 +400,34 @@ class ConstraintMatrix
    /// removed.
    /// The first vector of the pair stores the mapping for the rows, the second
    /// vector stores the mapping of the columns.
-   std::pair<Vec<int>, Vec<int>>
+   std::pair<Vec<int64_t>, Vec<int64_t>>
    compress( bool full = false );
 
    void
-   deleteRowsAndCols( Vec<int>& deletedRows, Vec<int>& deletedColumns,
+   deleteRowsAndCols( Vec<int64_t>& deletedRows, Vec<int64_t>& deletedColumns,
                       Vec<RowActivity<REAL>>& activities,
-                      Vec<int>& singletonRows, Vec<int>& singletonCols,
-                      Vec<int>& emptyCols );
+                      Vec<int64_t>& singletonRows, Vec<int64_t>& singletonCols,
+                      Vec<int64_t>& emptyCols );
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getRowSizes() const
    {
       return rowsize;
    }
 
-   Vec<int>&
+   Vec<int64_t>&
    getRowSizes()
    {
       return rowsize;
    }
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getColSizes() const
    {
       return colsize;
    }
 
-   Vec<int>&
+   Vec<int64_t>&
    getColSizes()
    {
       return colsize;
@@ -436,8 +436,8 @@ class ConstraintMatrix
    template <typename CoeffChanged>
    void
    changeCoefficients( const MatrixBuffer<REAL>& matrixBuffer,
-                       Vec<int>& singletonRows, Vec<int>& singletonCols,
-                       Vec<int>& emptyCols, Vec<RowActivity<REAL>>& activities,
+                       Vec<int64_t>& singletonRows, Vec<int64_t>& singletonCols,
+                       Vec<int64_t>& emptyCols, Vec<RowActivity<REAL>>& activities,
                        CoeffChanged&& coeffChanged )
    {
       if( matrixBuffer.empty() )
@@ -452,9 +452,9 @@ class ConstraintMatrix
 
              while( iter != matrixBuffer.end() )
              {
-                int row = iter->row;
+                int64_t row = iter->row;
 
-                int newsize = cons_matrix.changeRowInplace(
+                int64_t newsize = cons_matrix.changeRowInplace(
                     row,
                     [&]() {
                        return iter != matrixBuffer.end() && iter->row == row;
@@ -493,9 +493,9 @@ class ConstraintMatrix
 
              while( iter != matrixBuffer.end() )
              {
-                int col = iter->col;
+                int64_t col = iter->col;
 
-                int newsize = cons_matrix_transp.changeRowInplace(
+                int64_t newsize = cons_matrix_transp.changeRowInplace(
                     col,
                     [&]() {
                        return iter != matrixBuffer.end() && iter->col == col;
@@ -527,15 +527,15 @@ class ConstraintMatrix
    /// get the index of the column in the sparse array of row coefficients
    template <bool transpose = false>
    int
-   getSparseIndex( int col, int row ) const
+   getSparseIndex( int64_t col, int64_t row ) const
    {
       if( !transpose )
       {
          auto rowCoef = getRowCoefficients( row );
-         const int* indices = rowCoef.getIndices();
-         const int len = rowCoef.getLength();
+         const int64_t* indices = rowCoef.getIndices();
+         const int64_t len = rowCoef.getLength();
 
-         int index = std::lower_bound( indices, indices + len, col ) - indices;
+         int64_t index = std::lower_bound( indices, indices + len, col ) - indices;
          if( index != len && indices[index] == col )
             return index;
          return -1;
@@ -543,10 +543,10 @@ class ConstraintMatrix
       else
       {
          auto colCoef = getColumnCoefficients( col );
-         const int* indices = colCoef.getIndices();
-         const int len = colCoef.getLength();
+         const int64_t* indices = colCoef.getIndices();
+         const int64_t len = colCoef.getLength();
 
-         int index = std::lower_bound( indices, indices + len, row ) - indices;
+         int64_t index = std::lower_bound( indices, indices + len, row ) - indices;
          if( index != len && indices[index] == row )
             return index;
          return -1;
@@ -558,17 +558,17 @@ class ConstraintMatrix
    /// sparsity condition is not verified, returns true if the condition is
    /// verified on all relevantRows
    bool
-   checkAggregationSparsityCondition( int col,
+   checkAggregationSparsityCondition( int64_t col,
                                       const SparseVectorView<REAL>& equalityLHS,
-                                      int maxfillin, int maxshiftperrow,
-                                      Vec<int>& indbuffer );
+                                      int64_t maxfillin, int64_t maxshiftperrow,
+                                      Vec<int64_t>& indbuffer );
 
    int
-   sparsify( const Num<REAL>& num, int eqrow, const REAL& scale, int targetrow,
-             Vec<int>& intbuffer, Vec<REAL>& valbuffer,
-             const VariableDomains<REAL>& domains, Vec<int>& changedActivities,
-             Vec<RowActivity<REAL>>& activities, Vec<int>& singletonRows,
-             Vec<int>& singletonCols, Vec<int>& emptyCols, int presolveround );
+   sparsify( const Num<REAL>& num, int64_t eqrow, const REAL& scale, int64_t targetrow,
+             Vec<int64_t>& intbuffer, Vec<REAL>& valbuffer,
+             const VariableDomains<REAL>& domains, Vec<int64_t>& changedActivities,
+             Vec<RowActivity<REAL>>& activities, Vec<int64_t>& singletonRows,
+             Vec<int64_t>& singletonCols, Vec<int64_t>& emptyCols, int64_t presolveround );
 
    /// perform the substitution of a column using an equality, and updates
    /// the sides
@@ -578,12 +578,12 @@ class ConstraintMatrix
    /// @param equalityRHS the left hand side of the equality such that sum{
    /// a_j*x_i } = equalityRHS
    void
-   aggregate( const Num<REAL>& num, int col, SparseVectorView<REAL> equalityLHS,
+   aggregate( const Num<REAL>& num, int64_t col, SparseVectorView<REAL> equalityLHS,
               REAL equalityRHS, const VariableDomains<REAL>& domains,
-              Vec<int>& indbuffer, Vec<REAL>& valbuffer,
-              Vec<Triplet<REAL>>& tripletbuffer, Vec<int>& changedActivities,
-              Vec<RowActivity<REAL>>& activities, Vec<int>& singletonRows,
-              Vec<int>& singletonCols, Vec<int>& emptyCols, int presolveround );
+              Vec<int64_t>& indbuffer, Vec<REAL>& valbuffer,
+              Vec<Triplet<REAL>>& tripletbuffer, Vec<int64_t>& changedActivities,
+              Vec<RowActivity<REAL>>& activities, Vec<int64_t>& singletonRows,
+              Vec<int64_t>& singletonCols, Vec<int64_t>& emptyCols, int64_t presolveround );
 
    const SparseStorage<REAL>&
    getMatrixTranspose() const
@@ -645,11 +645,11 @@ class ConstraintMatrix
 
    /// additional vector storing the number of non-zeros
    /// within each row of the constraint matrix
-   Vec<int> rowsize;
+   Vec<int64_t> rowsize;
 
    /// additional vector storing the number of non-zeros
    /// within each column of the constraint matrix
-   Vec<int> colsize;
+   Vec<int64_t> colsize;
 };
 
 #ifdef PAPILO_USE_EXTERN_TEMPLATES
@@ -659,10 +659,10 @@ extern template class ConstraintMatrix<Rational>;
 #endif
 
 template <typename REAL>
-std::pair<Vec<int>, Vec<int>>
+std::pair<Vec<int64_t>, Vec<int64_t>>
 ConstraintMatrix<REAL>::compress( bool full )
 {
-   std::pair<Vec<int>, Vec<int>> mappings;
+   std::pair<Vec<int64_t>, Vec<int64_t>> mappings;
 
    tbb::parallel_invoke(
        [this, &mappings, full]() {
@@ -705,49 +705,49 @@ ConstraintMatrix<REAL>::compress( bool full )
 
 template <typename REAL>
 void
-ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
-                                           Vec<int>& deletedCols,
+ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int64_t>& deletedRows,
+                                           Vec<int64_t>& deletedCols,
                                            Vec<RowActivity<REAL>>& activities,
-                                           Vec<int>& singletonRows,
-                                           Vec<int>& singletonCols,
-                                           Vec<int>& emptyCols )
+                                           Vec<int64_t>& singletonRows,
+                                           Vec<int64_t>& singletonCols,
+                                           Vec<int64_t>& emptyCols )
 {
    if( deletedRows.empty() && deletedCols.empty() )
       return;
 
    // CSR storage
-   int* rowcols = cons_matrix.getColumns();
+   int64_t* rowcols = cons_matrix.getColumns();
    IndexRange* rowranges = cons_matrix.getRowRanges();
    REAL* rowvalues = cons_matrix.getValues();
 
    // CSC storage
-   int* colrows = cons_matrix_transp.getColumns();
+   int64_t* colrows = cons_matrix_transp.getColumns();
    IndexRange* colranges = cons_matrix_transp.getRowRanges();
    REAL* colvalues = cons_matrix_transp.getValues();
 
    tbb::parallel_invoke(
        [this, &deletedRows]() {
-          for( int row : deletedRows )
+          for( int64_t row : deletedRows )
           {
              cons_matrix.getNnz() -= rowsize[row];
              rowsize[row] = -1;
           }
        },
        [this, &deletedCols]() {
-          for( int col : deletedCols )
+          for( int64_t col : deletedCols )
              colsize[col] = -1;
        } );
 
    // delete rows from row storage and update colsizes
    tbb::parallel_invoke(
        [this, &deletedRows, rowranges, rowcols, &activities]() {
-          for( int row : deletedRows )
+          for( int64_t row : deletedRows )
           {
              assert( flags[row].test( RowFlag::kRedundant ) );
 
-             for( int i = rowranges[row].start; i != rowranges[row].end; ++i )
+             for( int64_t i = rowranges[row].start; i != rowranges[row].end; ++i )
              {
-                int col = rowcols[i];
+                int64_t col = rowcols[i];
                 if( colsize[col] == -1 )
                    continue;
 
@@ -767,11 +767,11 @@ ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
        },
        // delete cols from col storage and update rowsizes
        [this, &deletedCols, colranges, colrows] {
-          for( int col : deletedCols )
+          for( int64_t col : deletedCols )
           {
-             for( int i = colranges[col].start; i != colranges[col].end; ++i )
+             for( int64_t i = colranges[col].start; i != colranges[col].end; ++i )
              {
-                int row = colrows[i];
+                int64_t row = colrows[i];
 
                 if( rowsize[row] == -1 )
                    continue;
@@ -787,7 +787,7 @@ ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
 
    tbb::parallel_invoke(
        [this, colranges, &singletonCols, &emptyCols, colrows, colvalues]() {
-          for( int col = 0; col != getNCols(); ++col )
+          for( int64_t col = 0; col != getNCols(); ++col )
           {
              // if the size did not change, skip column
              if( colsize[col] == -1 ||
@@ -807,12 +807,12 @@ ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
              default:
              {
                 // now move contents of column to occupy free spaces
-                int j = 0;
+                int64_t j = 0;
 
-                for( int i = colranges[col].start; i != colranges[col].end;
+                for( int64_t i = colranges[col].start; i != colranges[col].end;
                      ++i )
                 {
-                   int row = colrows[i];
+                   int64_t row = colrows[i];
 
                    if( rowsize[row] == -1 )
                       ++j;
@@ -832,7 +832,7 @@ ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
           }
        },
        [this, rowranges, &singletonRows, &activities, rowcols, rowvalues]() {
-          for( int row = 0; row != getNRows(); ++row )
+          for( int64_t row = 0; row != getNRows(); ++row )
           {
              // if the size did not change, skip row
              if( rowsize[row] == -1 ||
@@ -851,11 +851,11 @@ ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
              }
 
              // now move contents of row to occupy free spaces
-             int j = 0;
+             int64_t j = 0;
 
-             for( int i = rowranges[row].start; i != rowranges[row].end; ++i )
+             for( int64_t i = rowranges[row].start; i != rowranges[row].end; ++i )
              {
-                int col = rowcols[i];
+                int64_t col = rowcols[i];
 
                 if( colsize[col] == -1 )
                    ++j;
@@ -884,32 +884,32 @@ ConstraintMatrix<REAL>::deleteRowsAndCols( Vec<int>& deletedRows,
 template <typename REAL>
 bool
 ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
-    int col, const SparseVectorView<REAL>& equalityLHS, int maxfillin,
-    int maxshiftperrow, Vec<int>& indbuffer )
+    int64_t col, const SparseVectorView<REAL>& equalityLHS, int64_t maxfillin,
+    int64_t maxshiftperrow, Vec<int64_t>& indbuffer )
 {
-   const int* indices = equalityLHS.getIndices();
-   const int len = equalityLHS.getLength();
+   const int64_t* indices = equalityLHS.getIndices();
+   const int64_t len = equalityLHS.getLength();
 
    const auto& freecolcoef = getColumnCoefficients( col );
-   const int* freecolindices = freecolcoef.getIndices();
-   const int length = freecolcoef.getLength();
+   const int64_t* freecolindices = freecolcoef.getIndices();
+   const int64_t length = freecolcoef.getLength();
 
    auto rowranges = cons_matrix.getRowRanges();
    auto colranges = cons_matrix_transp.getRowRanges();
 
-   int totalfillin = 0;
+   int64_t totalfillin = 0;
    bool eqinmatrix = false;
    bool shift = true;
 
    indbuffer.clear();
    indbuffer.reserve( std::max( length, len ) );
 
-   for( int k = 0; k < length; ++k )
+   for( int64_t k = 0; k < length; ++k )
    {
-      int row = freecolindices[k];
+      int64_t row = freecolindices[k];
       auto currentrow = getRowCoefficients( row );
-      const int* rowindices = currentrow.getIndices();
-      const int currentrowlen = currentrow.getLength();
+      const int64_t* rowindices = currentrow.getIndices();
+      const int64_t currentrowlen = currentrow.getLength();
 
       if( rowindices == indices )
       {
@@ -919,9 +919,9 @@ ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
          continue;
       }
 
-      int i = 0;
-      int j = 0;
-      int fillin = -1;
+      int64_t i = 0;
+      int64_t j = 0;
+      int64_t fillin = -1;
 
       while( i < len && j < currentrowlen )
       {
@@ -944,7 +944,7 @@ ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
       fillin += ( len - i );
       totalfillin += fillin;
 
-      int sparespace = rowranges[row + 1].start - rowranges[row].end;
+      int64_t sparespace = rowranges[row + 1].start - rowranges[row].end;
 
       if( sparespace < fillin )
          shift = true;
@@ -968,9 +968,9 @@ ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
    indbuffer.clear();
    shift = false;
 
-   for( int k = 0; k < len; ++k )
+   for( int64_t k = 0; k < len; ++k )
    {
-      int currentcolind = indices[k];
+      int64_t currentcolind = indices[k];
       if( currentcolind == col )
       {
          indbuffer.push_back( 0 );
@@ -978,12 +978,12 @@ ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
       }
 
       auto currentcol = getColumnCoefficients( currentcolind );
-      const int* colindices = currentcol.getIndices();
-      const int currentcollen = currentcol.getLength();
+      const int64_t* colindices = currentcol.getIndices();
+      const int64_t currentcollen = currentcol.getLength();
 
-      int i = 0;
-      int j = 0;
-      int fillin = eqinmatrix ? -1 : 0;
+      int64_t i = 0;
+      int64_t j = 0;
+      int64_t fillin = eqinmatrix ? -1 : 0;
 
       while( i < length && j < currentcollen )
       {
@@ -1005,7 +1005,7 @@ ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
 
       fillin += ( length - i );
 
-      int sparespace =
+      int64_t sparespace =
           colranges[currentcolind + 1].start - colranges[currentcolind].end;
 
       if( sparespace < fillin )
@@ -1028,25 +1028,25 @@ ConstraintMatrix<REAL>::checkAggregationSparsityCondition(
 template <typename REAL>
 int
 ConstraintMatrix<REAL>::sparsify(
-    const Num<REAL>& num, int eqrow, const REAL& scale, int targetrow,
-    Vec<int>& intbuffer, Vec<REAL>& valbuffer,
-    const VariableDomains<REAL>& domains, Vec<int>& changedActivities,
-    Vec<RowActivity<REAL>>& activities, Vec<int>& singletonRows,
-    Vec<int>& singletonCols, Vec<int>& emptyCols, int presolveround )
+    const Num<REAL>& num, int64_t eqrow, const REAL& scale, int64_t targetrow,
+    Vec<int64_t>& intbuffer, Vec<REAL>& valbuffer,
+    const VariableDomains<REAL>& domains, Vec<int64_t>& changedActivities,
+    Vec<RowActivity<REAL>>& activities, Vec<int64_t>& singletonRows,
+    Vec<int64_t>& singletonCols, Vec<int64_t>& emptyCols, int64_t presolveround )
 {
-   int ncancel = 0;
-   int fillincol = -1;
+   int64_t ncancel = 0;
+   int64_t fillincol = -1;
    REAL fillinval = 0;
    IndexRange* colranges = cons_matrix_transp.getRowRanges();
 
    const IndexRange& eqrange = cons_matrix.getRowRanges()[eqrow];
    IndexRange& targetrange = cons_matrix.getRowRanges()[targetrow];
 
-   int* rowcols = cons_matrix.getColumns();
+   int64_t* rowcols = cons_matrix.getColumns();
    REAL* rowvals = cons_matrix.getValues();
 
-   int j = eqrange.start;
-   int k = targetrange.start;
+   int64_t j = eqrange.start;
+   int64_t k = targetrange.start;
 
    while( j != eqrange.end && k != targetrange.end )
    {
@@ -1082,7 +1082,7 @@ ConstraintMatrix<REAL>::sparsify(
       }
    }
 
-   int remainingfillin = eqrange.end - j;
+   int64_t remainingfillin = eqrange.end - j;
 
    if( remainingfillin != 0 )
    {
@@ -1104,7 +1104,7 @@ ConstraintMatrix<REAL>::sparsify(
       return 0;
 
    REAL* colvals = cons_matrix_transp.getValues();
-   int* colrows = cons_matrix_transp.getColumns();
+   int64_t* colrows = cons_matrix_transp.getColumns();
 
    // change coefficients for column where fillin occurs (we allow at most one
    // such column, otherwise we return from this function before we reach this
@@ -1117,11 +1117,11 @@ ConstraintMatrix<REAL>::sparsify(
 
       colsize[fillincol] = cons_matrix_transp.changeRow(
           fillincol, 0, 1,
-          [&]( int i ) {
+          [&]( int64_t i ) {
              assert( i == 0 );
              return targetrow;
           },
-          [&]( int i ) {
+          [&]( int64_t i ) {
              assert( i == 0 );
              return fillinval;
           },
@@ -1140,7 +1140,7 @@ ConstraintMatrix<REAL>::sparsify(
    {
       if( rowcols[j] == rowcols[k] )
       {
-         int col = rowcols[k];
+         int64_t col = rowcols[k];
          assert( col != fillincol );
 
          REAL newval = rowvals[k] + scale * rowvals[j];
@@ -1161,8 +1161,8 @@ ConstraintMatrix<REAL>::sparsify(
             newval = 0;
          }
 
-         int count = 0;
-         int newsize = cons_matrix_transp.changeRowInplace(
+         int64_t count = 0;
+         int64_t newsize = cons_matrix_transp.changeRowInplace(
              col, [&]() { return ( count++ ) == 0; },
              [&]() {
                 assert( count == 1 );
@@ -1207,7 +1207,7 @@ ConstraintMatrix<REAL>::sparsify(
    }
 
    // finally update the row
-   auto updateActivity = [&]( int row, int col, REAL oldval, REAL newval ) {
+   auto updateActivity = [&]( int64_t row, int64_t col, REAL oldval, REAL newval ) {
       auto activityChange = [row, presolveround, &changedActivities](
                                 ActivityChange actChange,
                                 RowActivity<REAL>& activity ) {
@@ -1228,10 +1228,10 @@ ConstraintMatrix<REAL>::sparsify(
           domains.flags[col], oldval, newval, activities[row], activityChange );
    };
 
-   int newsize = cons_matrix.changeRow(
+   int64_t newsize = cons_matrix.changeRow(
        targetrow, eqrange.start, eqrange.end,
-       [&]( int i ) { return rowcols[i]; },
-       [&]( int i ) { return scale * rowvals[i]; },
+       [&]( int64_t i ) { return rowcols[i]; },
+       [&]( int64_t i ) { return scale * rowvals[i]; },
        [&]( const REAL& a, const REAL& b ) {
           REAL val = a + b;
           if( num.isZero( val ) )
@@ -1261,20 +1261,20 @@ ConstraintMatrix<REAL>::sparsify(
 template <typename REAL>
 void
 ConstraintMatrix<REAL>::aggregate(
-    const Num<REAL>& num, int col, SparseVectorView<REAL> equalityLHS,
-    REAL equalityRHS, const VariableDomains<REAL>& domains, Vec<int>& indbuffer,
+    const Num<REAL>& num, int64_t col, SparseVectorView<REAL> equalityLHS,
+    REAL equalityRHS, const VariableDomains<REAL>& domains, Vec<int64_t>& indbuffer,
     Vec<REAL>& valbuffer, Vec<Triplet<REAL>>& tripletbuffer,
-    Vec<int>& changedActivities, Vec<RowActivity<REAL>>& activities,
-    Vec<int>& singletonRows, Vec<int>& singletonCols, Vec<int>& emptyCols,
-    int presolveround )
+    Vec<int64_t>& changedActivities, Vec<RowActivity<REAL>>& activities,
+    Vec<int64_t>& singletonRows, Vec<int64_t>& singletonCols, Vec<int64_t>& emptyCols,
+    int64_t presolveround )
 {
-   const int equalitylen = equalityLHS.getLength();
+   const int64_t equalitylen = equalityLHS.getLength();
    const REAL* equalityvalues = equalityLHS.getValues();
-   const int* equalityindices = equalityLHS.getIndices();
+   const int64_t* equalityindices = equalityLHS.getIndices();
 
    assert( std::is_sorted( equalityindices, equalityindices + equalitylen ) );
 
-   int freeColPos;
+   int64_t freeColPos;
    for( freeColPos = 0; freeColPos != equalitylen; ++freeColPos )
    {
       if( equalityindices[freeColPos] == col )
@@ -1289,7 +1289,7 @@ ConstraintMatrix<REAL>::aggregate(
 
    auto updateActivity = [presolveround, &changedActivities, &domains,
                           &activities, &tripletbuffer](
-                             int row, int col, REAL oldval, REAL newval ) {
+                             int64_t row, int64_t col, REAL oldval, REAL newval ) {
       if( oldval == newval )
          return;
 
@@ -1326,13 +1326,13 @@ ConstraintMatrix<REAL>::aggregate(
 
    const auto& freecol = getColumnCoefficients( col );
    const REAL* freecolcoef = freecol.getValues();
-   const int* freecolindices = freecol.getIndices();
-   const int freecollength = freecol.getLength();
+   const int64_t* freecolindices = freecol.getIndices();
+   const int64_t freecollength = freecol.getLength();
 
    // make the changes in the matrix and update the constraints' sides
-   for( int i = 0; i < freecollength; ++i )
+   for( int64_t i = 0; i < freecollength; ++i )
    {
-      int row = freecolindices[i];
+      int64_t row = freecolindices[i];
 
       assert( flags[row].test( RowFlag::kRedundant ) ||
               ( !flags[row].test( RowFlag::kEquation ) &&
@@ -1348,7 +1348,7 @@ ConstraintMatrix<REAL>::aggregate(
       if( cons_matrix.getColumns() + cons_matrix.rowranges[row].start ==
           equalityindices )
       {
-         for( int k = 0; k < equalitylen; ++k )
+         for( int64_t k = 0; k < equalitylen; ++k )
             tripletbuffer.emplace_back( equalityindices[k], row, 0 );
 
          flags[row].set( RowFlag::kRedundant );
@@ -1364,10 +1364,10 @@ ConstraintMatrix<REAL>::aggregate(
 
       REAL eqscale = eqbasescale * freecolcoef[i];
 
-      int newsize = cons_matrix.changeRow(
-          row, int{ 0 }, equalitylen,
-          [&]( int k ) { return equalityindices[k]; },
-          [&]( int k ) {
+      int64_t newsize = cons_matrix.changeRow(
+          row, int64_t{ 0 }, equalitylen,
+          [&]( int64_t k ) { return equalityindices[k]; },
+          [&]( int64_t k ) {
              return k == freeColPos ? REAL( -freecolcoef[i] )
                                     : REAL( equalityvalues[k] * eqscale );
           },
@@ -1391,7 +1391,7 @@ ConstraintMatrix<REAL>::aggregate(
       assert(
           std::all_of( getRowCoefficients( row ).getIndices(),
                        getRowCoefficients( row ).getIndices() + rowsize[row],
-                       [&]( int rowcol ) { return rowcol != col; } ) );
+                       [&]( int64_t rowcol ) { return rowcol != col; } ) );
 
       // change the bounds
       if( equalityRHS != 0 )
@@ -1422,11 +1422,11 @@ ConstraintMatrix<REAL>::aggregate(
    {
       pdqsort( tripletbuffer.begin(), tripletbuffer.end() );
 
-      auto handleCol = [&]( int col, int start, int end ) {
-         int newsize = cons_matrix_transp.changeRow(
+      auto handleCol = [&]( int64_t col, int64_t start, int64_t end ) {
+         int64_t newsize = cons_matrix_transp.changeRow(
              col, start, end,
-             [&]( int k ) { return std::get<1>( tripletbuffer[k] ); },
-             [&]( int k ) { return std::get<2>( tripletbuffer[k] ); },
+             [&]( int64_t k ) { return std::get<1>( tripletbuffer[k] ); },
+             [&]( int64_t k ) { return std::get<2>( tripletbuffer[k] ); },
              []( const REAL& oldval, const REAL& newval ) { return newval; },
              []( int, int, REAL, REAL ) {}, valbuffer, indbuffer );
 
@@ -1445,10 +1445,10 @@ ConstraintMatrix<REAL>::aggregate(
          }
       };
 
-      int start = 0;
-      int currcol = std::get<0>( tripletbuffer[0] );
-      int nchgs = tripletbuffer.size();
-      for( int i = 1; i != nchgs; ++i )
+      int64_t start = 0;
+      int64_t currcol = std::get<0>( tripletbuffer[0] );
+      int64_t nchgs = tripletbuffer.size();
+      for( int64_t i = 1; i != nchgs; ++i )
       {
          if( std::get<0>( tripletbuffer[i] ) != currcol )
          {

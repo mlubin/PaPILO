@@ -60,11 +60,11 @@ class HighsInterface : public SolverInterface<REAL>
    }
 
    void
-   setUp( const Problem<REAL>& problem, const Vec<int>& row_maps,
-          const Vec<int>& col_maps ) override
+   setUp( const Problem<REAL>& problem, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps ) override
    {
-      int ncols = problem.getNCols();
-      int nrows = problem.getNRows();
+      int64_t ncols = problem.getNCols();
+      int64_t nrows = problem.getNRows();
       const Vec<String>& varNames = problem.getVariableNames();
       const Vec<String>& consNames = problem.getConstraintNames();
       const VariableDomains<REAL>& domains = problem.getVariableDomains();
@@ -98,7 +98,7 @@ class HighsInterface : public SolverInterface<REAL>
       model.rowLower_.resize( nrows );
       model.rowUpper_.resize( nrows );
 
-      for( int i = 0; i != nrows; ++i )
+      for( int64_t i = 0; i != nrows; ++i )
       {
          model.rowLower_[i] = rflags[i].test( RowFlag::kLhsInf )
                                   ? -inf
@@ -113,9 +113,9 @@ class HighsInterface : public SolverInterface<REAL>
       model.Astart_.resize( ncols + 1 );
       model.Astart_[ncols] = model.nnz_;
 
-      int start = 0;
+      int64_t start = 0;
 
-      for( int i = 0; i < ncols; ++i )
+      for( int64_t i = 0; i < ncols; ++i )
       {
          assert( !domains.flags[i].test( ColFlag::kInactive ) );
 
@@ -130,13 +130,13 @@ class HighsInterface : public SolverInterface<REAL>
 
          auto colvec = consMatrix.getColumnCoefficients( i );
 
-         int collen = colvec.getLength();
-         const int* colrows = colvec.getIndices();
+         int64_t collen = colvec.getLength();
+         const int64_t* colrows = colvec.getIndices();
          const REAL* colvals = colvec.getValues();
 
          model.Astart_[i] = start;
 
-         for( int k = 0; k != collen; ++k )
+         for( int64_t k = 0; k != collen; ++k )
          {
             model.Avalue_[start + k] = double( colvals[k] );
             model.Aindex_[start + k] = double( colrows[k] );
@@ -149,12 +149,12 @@ class HighsInterface : public SolverInterface<REAL>
    }
 
    void
-   setUp( const Problem<REAL>& problem, const Vec<int>& row_maps,
-          const Vec<int>& col_maps, const Components& components,
+   setUp( const Problem<REAL>& problem, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps, const Components& components,
           const ComponentInfo& component ) override
    {
-      int ncols = problem.getNCols();
-      int nrows = problem.getNRows();
+      int64_t ncols = problem.getNCols();
+      int64_t nrows = problem.getNRows();
       const Vec<String>& varNames = problem.getVariableNames();
       const Vec<String>& consNames = problem.getConstraintNames();
       const VariableDomains<REAL>& domains = problem.getVariableDomains();
@@ -163,10 +163,10 @@ class HighsInterface : public SolverInterface<REAL>
       const auto& lhs_values = consMatrix.getLeftHandSides();
       const auto& rhs_values = consMatrix.getRightHandSides();
       const auto& rflags = problem.getRowFlags();
-      const int* rowset = components.getComponentsRows( component.componentid );
-      const int* colset = components.getComponentsCols( component.componentid );
-      int numrows = components.getComponentsNumRows( component.componentid );
-      int numcols = components.getComponentsNumCols( component.componentid );
+      const int64_t* rowset = components.getComponentsRows( component.componentid );
+      const int64_t* colset = components.getComponentsCols( component.componentid );
+      int64_t numrows = components.getComponentsNumRows( component.componentid );
+      int64_t numcols = components.getComponentsNumCols( component.componentid );
 
       HighsLp model;
 
@@ -186,9 +186,9 @@ class HighsInterface : public SolverInterface<REAL>
       model.rowLower_.resize( numrows );
       model.rowUpper_.resize( numrows );
 
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
       {
-         int row = rowset[i];
+         int64_t row = rowset[i];
 
          assert( components.getRowComponentIdx( row ) == i );
 
@@ -205,11 +205,11 @@ class HighsInterface : public SolverInterface<REAL>
       model.Astart_.resize( numcols + 1 );
       model.Astart_[numcols] = model.nnz_;
 
-      int start = 0;
+      int64_t start = 0;
 
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
       {
-         int col = colset[i];
+         int64_t col = colset[i];
 
          assert( components.getColComponentIdx( col ) == i );
          assert( !domains.flags[col].test( ColFlag::kInactive ) );
@@ -225,13 +225,13 @@ class HighsInterface : public SolverInterface<REAL>
 
          auto colvec = consMatrix.getColumnCoefficients( col );
 
-         int collen = colvec.getLength();
-         const int* colrows = colvec.getIndices();
+         int64_t collen = colvec.getLength();
+         const int64_t* colrows = colvec.getIndices();
          const REAL* colvals = colvec.getValues();
 
          model.Astart_[i] = start;
 
-         for( int k = 0; k != collen; ++k )
+         for( int64_t k = 0; k != collen; ++k )
          {
             model.Avalue_[start + k] = double( colvals[k] );
             model.Aindex_[start + k] =
@@ -310,8 +310,8 @@ class HighsInterface : public SolverInterface<REAL>
    getSolution( Solution<REAL>& sol ) override
    {
       const HighsSolution& highsSol = solver.getSolution();
-      int numcols = solver.getNumCols();
-      int numrows = solver.getNumRows();
+      int64_t numcols = solver.getNumCols();
+      int64_t numrows = solver.getNumRows();
 
       if( highsSol.col_value.size() != numcols ||
           highsSol.col_dual.size() != numcols ||
@@ -324,7 +324,7 @@ class HighsInterface : public SolverInterface<REAL>
 
       // get primal values
       sol.primal.resize( numcols );
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
          sol.primal[i] = highsSol.col_value[i];
 
       // return if no dual requested
@@ -333,26 +333,26 @@ class HighsInterface : public SolverInterface<REAL>
 
       // get reduced costs
       sol.col_dual.resize( numcols );
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
          sol.col_dual[i] = REAL( highsSol.col_dual[i] );
 
       // get row duals
       sol.row_dual.resize( numrows );
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
          sol.row_dual[i] = REAL( highsSol.row_dual[i] );
 
       return true;
    }
 
    bool
-   getSolution( const Components& components, int component,
+   getSolution( const Components& components, int64_t component,
                 Solution<REAL>& sol ) override
    {
       if( this->status != SolverStatus::kOptimal )
          return false;
 
-      int numcols = solver.getNumCols();
-      int numrows = solver.getNumRows();
+      int64_t numcols = solver.getNumCols();
+      int64_t numrows = solver.getNumRows();
       const HighsSolution& highsSol = solver.getSolution();
       if( highsSol.col_value.size() != numcols ||
           highsSol.col_dual.size() != numcols ||
@@ -362,19 +362,19 @@ class HighsInterface : public SolverInterface<REAL>
 
       assert( components.getComponentsNumCols( component ) == numcols );
 
-      const int* compcols = components.getComponentsCols( component );
-      for( int i = 0; i != numcols; ++i )
+      const int64_t* compcols = components.getComponentsCols( component );
+      for( int64_t i = 0; i != numcols; ++i )
          sol.primal[compcols[i]] = REAL( highsSol.col_value[i] );
 
       if( sol.type == SolutionType::kPrimal )
          return true;
 
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
          sol.col_dual[compcols[i]] = REAL( highsSol.col_dual[i] );
 
-      const int* comprows = components.getComponentsRows( component );
+      const int64_t* comprows = components.getComponentsRows( component );
 
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
          sol.row_dual[comprows[i]] = REAL( highsSol.row_dual[i] );
 
       return true;

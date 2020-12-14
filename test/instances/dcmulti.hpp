@@ -1765,8 +1765,8 @@ dcmulti()
        "Z4123", "Z4213", "Z4223", "Z5113", "Z5123", "Z5213", "Z5223", "W13",
        "W23",   "W33",   "W43",   "W53",
    };
-   int nCols = 548;
-   int nRows = 290;
+   int64_t nCols = 548;
+   int64_t nRows = 290;
    ProblemBuilder<double> pb;
    pb.reserve( 1315, 290, 548 );
    pb.setNumRows( nRows );

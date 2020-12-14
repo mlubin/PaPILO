@@ -560,8 +560,8 @@ gt2()
        "x...1210", "x...1211", "x...1212", "x...1213", "x...1214", "x...1215",
        "x...1216", "x...1217",
    };
-   int nCols = 188;
-   int nRows = 29;
+   int64_t nCols = 188;
+   int64_t nRows = 29;
    ProblemBuilder<double> pb;
    pb.reserve( 376, 29, 188 );
    pb.setNumRows( nRows );

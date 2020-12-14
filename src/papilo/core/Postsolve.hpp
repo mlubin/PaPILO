@@ -79,16 +79,16 @@ template <typename REAL>
 class Postsolve
 {
  public:
-   unsigned int nColsOriginal;
-   unsigned int nRowsOriginal;
+   int64_t nColsOriginal;
+   int64_t nRowsOriginal;
 
    /// mapping of reduced problems column indices to column indices in the
    /// original problem
-   Vec<int> origcol_mapping;
+   Vec<int64_t> origcol_mapping;
 
    /// mapping of reduced problems row indices to row indices in the original
    /// problem
-   Vec<int> origrow_mapping;
+   Vec<int64_t> origrow_mapping;
 
    // set to full for development of postsolve,
    // later will not be default value
@@ -96,9 +96,9 @@ class Postsolve
    PostsolveType postsolveType = PostsolveType::kPrimal;
 
    Vec<ReductionType> types;
-   Vec<int> indices;
+   Vec<int64_t> indices;
    Vec<REAL> values;
-   Vec<int> start;
+   Vec<int64_t> start;
 
    Problem<REAL> problem;
 
@@ -118,16 +118,16 @@ class Postsolve
    Postsolve( const Problem<REAL>& problem, const Num<REAL>& num )
        : problem( problem ), num( num )
    {
-      int nrows = problem.getNRows();
-      int ncols = problem.getNCols();
+      int64_t nrows = problem.getNRows();
+      int64_t ncols = problem.getNCols();
 
       origrow_mapping.reserve( nrows );
       origrow_mapping.reserve( ncols );
 
-      for( int i = 0; i < nrows; ++i )
+      for( int64_t i = 0; i < nrows; ++i )
          origrow_mapping.push_back( i );
 
-      for( int i = 0; i < ncols; ++i )
+      for( int64_t i = 0; i < ncols; ++i )
          origcol_mapping.push_back( i );
 
       nColsOriginal = ncols;
@@ -139,31 +139,31 @@ class Postsolve
       this->problem.compress( true );
    }
 
-   int
-   notifySavedRow( int row, const SparseVectorView<REAL>& coefficients,
+   int64_t
+   notifySavedRow( int64_t row, const SparseVectorView<REAL>& coefficients,
                    REAL lhs, REAL rhs, const RowFlags& flags );
 
    void
-   notifyModifiedRow( int row );
+   notifyModifiedRow( int64_t row );
 
    void
-   notifyFixedCol( int col, REAL val );
+   notifyFixedCol( int64_t col, REAL val );
 
    void
-   notifySubstitution( int col, SparseVectorView<REAL> equalityLHS,
+   notifySubstitution( int64_t col, SparseVectorView<REAL> equalityLHS,
                        REAL equalityRHS );
 
    /// col1 = col2scale * col2 and are merged into a new column y = col2 +
    /// col2scale * col1 which takes over the index of col2
    void
-   notifyParallelCols( int col1, bool col1integral, bool col1lbinf,
+   notifyParallelCols( int64_t col1, bool col1integral, bool col1lbinf,
                        const REAL& col1lb, bool col1ubinf, const REAL& col1ub,
-                       int col2, bool col2integral, bool col2lbinf,
+                       int64_t col2, bool col2integral, bool col2lbinf,
                        const REAL& col2lb, bool col2ubinf, const REAL& col2ub,
                        const REAL& col2scale );
 
    void
-   compress( const Vec<int>& rowmapping, const Vec<int>& colmapping,
+   compress( const Vec<int64_t>& rowmapping, const Vec<int64_t>& colmapping,
              bool full = false )
    {
       tbb::parallel_invoke(
@@ -230,7 +230,7 @@ class Postsolve
       start.push_back( values.size() );
    }
 
-   Vec<int> row_stack_index;
+   Vec<int64_t> row_stack_index;
 };
 
 #ifdef PAPILO_USE_EXTERN_TEMPLATES
@@ -241,7 +241,7 @@ extern template class Postsolve<Rational>;
 
 template <typename REAL>
 void
-Postsolve<REAL>::notifyFixedCol( int col, REAL val )
+Postsolve<REAL>::notifyFixedCol( int64_t col, REAL val )
 {
    types.push_back( ReductionType::kFixedCol );
    indices.push_back( origcol_mapping[col] );
@@ -252,13 +252,13 @@ Postsolve<REAL>::notifyFixedCol( int col, REAL val )
 
 // template <typename REAL>
 // void
-// Postsolve<REAL>::notifySavedRow( int row,
+// Postsolve<REAL>::notifySavedRow( int64_t row,
 //                                  const SparseVectorView<REAL>& coefficients,
 //                                  REAL lhs, REAL rhs, const RowFlags& flags )
 // {
 //    const REAL* coefs = coefficients.getValues();
-//    const int* columns = coefficients.getIndices();
-//    const int length = coefficients.getLength();
+//    const int64_t* columns = coefficients.getIndices();
+//    const int64_t length = coefficients.getLength();
 
 //    types.push_back( ReductionType::kSaveRow );
 //    indices.push_back( origrow_mapping[row] );
@@ -278,7 +278,7 @@ Postsolve<REAL>::notifyFixedCol( int col, REAL val )
 //       indices.push_back( 0 );
 //    values.push_back( rhs );
 
-//    for( int i = 0; i < length; ++i )
+//    for( int64_t i = 0; i < length; ++i )
 //    {
 //       indices.push_back( columns[i] );
 //       values.push_back( coefs[i] );
@@ -289,22 +289,22 @@ Postsolve<REAL>::notifyFixedCol( int col, REAL val )
 
 template <typename REAL>
 void
-Postsolve<REAL>::notifyModifiedRow( int row )
+Postsolve<REAL>::notifyModifiedRow( int64_t row )
 {
-   int origrow = origrow_mapping[row];
+   int64_t origrow = origrow_mapping[row];
    row_stack_index[origrow] = -1;
 }
 
 template <typename REAL>
-int
-Postsolve<REAL>::notifySavedRow( int row,
+int64_t
+Postsolve<REAL>::notifySavedRow( int64_t row,
                                  const SparseVectorView<REAL>& coefficients,
                                  REAL lhs, REAL rhs, const RowFlags& flags )
 {
    // initialize arrays if necessary
    if( row_stack_index.size() == 0 )
    {
-      int nrows = problem.getNRows();
+      int64_t nrows = problem.getNRows();
       row_stack_index.resize( nrows, -1 );
    }
 
@@ -313,12 +313,12 @@ Postsolve<REAL>::notifySavedRow( int row,
       return row_stack_index[row];
 
    const REAL* coefs = coefficients.getValues();
-   const int* columns = coefficients.getIndices();
-   const int length = coefficients.getLength();
+   const int64_t* columns = coefficients.getIndices();
+   const int64_t length = coefficients.getLength();
 
    types.push_back( ReductionType::kSaveRow );
 
-   int stack_index = indices.size();
+   int64_t stack_index = indices.size();
    indices.push_back( origrow_mapping[row] );
    values.push_back( (double)length );
 
@@ -336,7 +336,7 @@ Postsolve<REAL>::notifySavedRow( int row,
       indices.push_back( 0 );
    values.push_back( rhs );
 
-   for( int i = 0; i < length; ++i )
+   for( int64_t i = 0; i < length; ++i )
    {
       indices.push_back( columns[i] );
       values.push_back( coefs[i] );
@@ -351,20 +351,20 @@ Postsolve<REAL>::notifySavedRow( int row,
 
 template <typename REAL>
 void
-Postsolve<REAL>::notifySubstitution( int col,
+Postsolve<REAL>::notifySubstitution( int64_t col,
                                      SparseVectorView<REAL> equalityLHS,
                                      REAL equalityRHS )
 {
    const REAL* coefs = equalityLHS.getValues();
-   const int* columns = equalityLHS.getIndices();
-   const int length = equalityLHS.getLength();
+   const int64_t* columns = equalityLHS.getIndices();
+   const int64_t length = equalityLHS.getLength();
    assert( length > 1 );
 
    types.push_back( ReductionType::kSubstitutedCol );
    values.push_back( equalityRHS );
    // values.insert( values.end(), coefs, coefs + length );
    indices.push_back( origcol_mapping[col] );
-   for( int i = 0; i < length; ++i )
+   for( int64_t i = 0; i < length; ++i )
    {
       indices.push_back( origcol_mapping[columns[i]] );
       values.push_back( coefs[i] );
@@ -377,18 +377,18 @@ Postsolve<REAL>::notifySubstitution( int col,
 /// col2scale * col1 which takes over the index of col2
 template <typename REAL>
 void
-Postsolve<REAL>::notifyParallelCols( int col1, bool col1integral,
+Postsolve<REAL>::notifyParallelCols( int64_t col1, bool col1integral,
                                      bool col1lbinf, const REAL& col1lb,
                                      bool col1ubinf, const REAL& col1ub,
-                                     int col2, bool col2integral,
+                                     int64_t col2, bool col2integral,
                                      bool col2lbinf, const REAL& col2lb,
                                      bool col2ubinf, const REAL& col2ub,
                                      const REAL& col2scale )
 {
    // encode the finiteness of the bounds in one integer and store it as
    // value for column 1
-   int col1BoundFlags = 0;
-   int col2BoundFlags = 0;
+   int64_t col1BoundFlags = 0;
+   int64_t col2BoundFlags = 0;
 
    if( col1integral )
       col1BoundFlags |= static_cast<int>( ColFlag::kIntegral );
@@ -437,9 +437,9 @@ Postsolve<REAL>::undo( const Solution<REAL>& reducedSolution,
    origSol.clear();
    origSol.resize( nColsOriginal );
 
-   for( int k = 0; k < reducedSol.size(); ++k )
+   for( int64_t k = 0; k < reducedSol.size(); ++k )
    {
-      int origcol = origcol_mapping[k];
+      int64_t origcol = origcol_mapping[k];
       origSol[origcol] = reducedSol[k];
    }
 
@@ -448,18 +448,18 @@ Postsolve<REAL>::undo( const Solution<REAL>& reducedSolution,
       assert( reducedSolution.col_dual.size() == origcol_mapping.size() );
       originalSolution.col_dual.clear();
       originalSolution.col_dual.resize( nColsOriginal );
-      for( int k = 0; k < origcol_mapping.size(); k++ )
+      for( int64_t k = 0; k < origcol_mapping.size(); k++ )
       {
-         int origcol = origcol_mapping[k];
+         int64_t origcol = origcol_mapping[k];
          originalSolution.col_dual[origcol] = reducedSolution.col_dual[k];
       }
 
       assert( reducedSolution.row_dual.size() == origrow_mapping.size() );
       originalSolution.row_dual.clear();
       originalSolution.row_dual.resize( nRowsOriginal );
-      for( int k = 0; k < origrow_mapping.size(); k++ )
+      for( int64_t k = 0; k < origrow_mapping.size(); k++ )
       {
-         int origrow = origrow_mapping[k];
+         int64_t origrow = origrow_mapping[k];
          originalSolution.row_dual[origrow] = reducedSolution.row_dual[k];
       }
    }
@@ -485,18 +485,18 @@ Postsolve<REAL>::undo( const Solution<REAL>& reducedSolution,
       checker.checkSolution( kktState );
    }
 
-   for( int i = types.size() - 1; i >= 0; --i )
+   for( int64_t i = types.size() - 1; i >= 0; --i )
    {
       auto type = types[i];
-      int first = start[i];
-      int last = start[i + 1];
+      int64_t first = start[i];
+      int64_t last = start[i + 1];
 
       switch( type )
       {
       case ReductionType::kSaveRow:
       {
-         int row = indices[first];
-         int length = (int)values[first];
+         int64_t row = indices[first];
+         int64_t length = (int)values[first];
          bool lb_inf = false;
          bool ub_inf = false;
          if( indices[1] )
@@ -510,7 +510,7 @@ Postsolve<REAL>::undo( const Solution<REAL>& reducedSolution,
       }
       case ReductionType::kFixedCol:
       {
-         int col = indices[first];
+         int64_t col = indices[first];
          // todo: move to checker
          // assert( !solSet[col] );
          // solSet[col] = true;
@@ -519,12 +519,12 @@ Postsolve<REAL>::undo( const Solution<REAL>& reducedSolution,
       }
       case ReductionType::kSubstitutedCol:
       {
-         int col = indices[first];
+         int64_t col = indices[first];
          // assert( !solSet[col] );
          REAL side = values[first];
          REAL colCoef = 0.0;
          StableSum<REAL> sumcols;
-         for( int j = first + 1; j < last; ++j )
+         for( int64_t j = first + 1; j < last; ++j )
          {
             if( indices[j] == col )
                colCoef = values[j];
@@ -543,16 +543,16 @@ Postsolve<REAL>::undo( const Solution<REAL>& reducedSolution,
       }
       case ReductionType::kParallelCol:
       {
-         constexpr int IS_INTEGRAL = static_cast<int>( ColFlag::kIntegral );
-         constexpr int IS_LBINF = static_cast<int>( ColFlag::kLbInf );
-         constexpr int IS_UBINF = static_cast<int>( ColFlag::kUbInf );
+         constexpr int64_t IS_INTEGRAL = static_cast<int>( ColFlag::kIntegral );
+         constexpr int64_t IS_LBINF = static_cast<int>( ColFlag::kLbInf );
+         constexpr int64_t IS_UBINF = static_cast<int>( ColFlag::kUbInf );
 
          assert( last - first == 5 );
 
-         int col1 = indices[first];
-         int col1boundFlags = indices[first + 1];
-         int col2 = indices[first + 2];
-         int col2boundFlags = indices[first + 3];
+         int64_t col1 = indices[first];
+         int64_t col1boundFlags = indices[first + 1];
+         int64_t col2 = indices[first + 2];
+         int64_t col2boundFlags = indices[first + 3];
          const REAL& col1lb = values[first];
          const REAL& col1ub = values[first + 1];
          const REAL& col2lb = values[first + 2];

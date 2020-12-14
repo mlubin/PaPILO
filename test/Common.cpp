@@ -27,13 +27,13 @@
 
 TEST_CASE( "test activity computation and constraint propagation", "[core]" )
 {
-   Vec<int> colinds{0, 1, 2, 3, 4, 5, 6, 7};
+   Vec<int64_t> colinds{0, 1, 2, 3, 4, 5, 6, 7};
    Vec<double> rowvalues{1.0, -1.0, 2.0, -2.0, 3.0, -3.0, 4.0, -4.0};
 
    Vec<double> lbs{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
    Vec<double> ubs{1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 
-   int colrows = 0;
+   int64_t colrows = 0;
 
    Vec<RowActivity<double>> activities;
    activities.emplace_back( compute_row_activity(
@@ -44,9 +44,9 @@ TEST_CASE( "test activity computation and constraint propagation", "[core]" )
    REQUIRE( activities[0].min == -activities[0].max );
    REQUIRE( activities[0].max == ( 1.0 + 2.0 + 3.0 + 4.0 ) );
 
-   int ncalls = 0;
+   int64_t ncalls = 0;
    // fix column 0 to upper bound
-   auto activity_callback = [&]( ActivityChange actChange, int row,
+   auto activity_callback = [&]( ActivityChange actChange, int64_t row,
                                  RowActivity<double>& activity ) {
       REQUIRE( row == 0 );
       REQUIRE( &activity == &activities[0] );
@@ -144,7 +144,7 @@ TEST_CASE( "test activity computation and constraint propagation", "[core]" )
    ncalls = 0;
    propagate_row( rowvalues.data(), colinds.data(), rowvalues.size(),
                   activities[0], -infinity<double>(), activities[0].min, lbs,
-                  ubs, [&]( BoundChange bndChg, int colid, double newbnd ) {
+                  ubs, [&]( BoundChange bndChg, int64_t colid, double newbnd ) {
                      if( bndChg == BoundChange::kLower )
                      {
                         lbs_cpy[colid] = newbnd;
@@ -177,7 +177,7 @@ TEST_CASE( "test activity computation and constraint propagation", "[core]" )
    ncalls = 0;
    propagate_row( rowvalues.data(), colinds.data(), rowvalues.size(),
                   activities[0], activities[0].max, infinity<double>(), lbs,
-                  ubs, [&]( BoundChange bndChg, int colid, double newbnd ) {
+                  ubs, [&]( BoundChange bndChg, int64_t colid, double newbnd ) {
                      if( bndChg == BoundChange::kLower )
                      {
                         lbs_cpy[colid] = newbnd;

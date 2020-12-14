@@ -33,12 +33,12 @@ namespace papilo
 /// helper function to compress a vector-like container using the given mapping
 template <typename VEC>
 void
-compress_vector( const Vec<int>& mapping, VEC& vec )
+compress_vector( const Vec<int64_t>& mapping, VEC& vec )
 {
    assert( vec.size() == mapping.size() );
 
-   int newSize = 0;
-   for( int i = 0; i != static_cast<int>( vec.size() ); ++i )
+   int64_t newSize = 0;
+   for( int64_t i = 0; i != static_cast<int>( vec.size() ); ++i )
    {
       assert( mapping[i] <= i );
 
@@ -55,12 +55,12 @@ compress_vector( const Vec<int>& mapping, VEC& vec )
 /// given mapping
 template <typename VEC>
 void
-compress_index_vector( const Vec<int>& mapping, VEC& vec )
+compress_index_vector( const Vec<int64_t>& mapping, VEC& vec )
 {
-   int offset = 0;
+   int64_t offset = 0;
    for( std::size_t i = 0; i < vec.size(); ++i )
    {
-      int newindex = mapping[vec[i]];
+      int64_t newindex = mapping[vec[i]];
       if( newindex != -1 )
          vec[i - offset] = newindex;
       else

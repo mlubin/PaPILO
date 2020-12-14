@@ -81,11 +81,11 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
    const auto& obj = problem.getObjective().coefficients;
 
    PresolveStatus result = PresolveStatus::kUnchanged;
-   Vec<int> rowsWithPenaltySingletons;
+   Vec<int64_t> rowsWithPenaltySingletons;
    Vec<uint8_t> penaltyVarCount( nrows );
 
-   auto handleEquation = [&]( int col, bool lbimplied, bool ubimplied,
-                              const REAL& val, int row, bool impliedeq,
+   auto handleEquation = [&]( int64_t col, bool lbimplied, bool ubimplied,
+                              const REAL& val, int64_t row, bool impliedeq,
                               const REAL& side ) {
       if( !impliedeq && rowsize[row] <= 1 )
          return;
@@ -160,12 +160,12 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
       }
    };
 
-   for( int col : singletonCols )
+   for( int64_t col : singletonCols )
    {
       assert( colsize[col] == 1 );
       assert( constMatrix.getColumnCoefficients( col ).getLength() == 1 );
 
-      int row = constMatrix.getColumnCoefficients( col ).getIndices()[0];
+      int64_t row = constMatrix.getColumnCoefficients( col ).getIndices()[0];
       const REAL& val = constMatrix.getColumnCoefficients( col ).getValues()[0];
 
       assert( !constMatrix.isRowRedundant( row ) );
@@ -206,9 +206,9 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
             bool unsuitableForSubstitution = false;
 
             auto rowvec = constMatrix.getRowCoefficients( row );
-            const int* rowinds = rowvec.getIndices();
+            const int64_t* rowinds = rowvec.getIndices();
             const REAL* rowvals = rowvec.getValues();
-            for( int i = 0; i != rowvec.getLength(); ++i )
+            for( int64_t i = 0; i != rowvec.getLength(); ++i )
             {
                if( rowinds[i] == col )
                   continue;
@@ -247,8 +247,8 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
             continue;
       }
 
-      int nuplocks = 0;
-      int ndownlocks = 0;
+      int64_t nuplocks = 0;
+      int64_t ndownlocks = 0;
 
       count_locks( val, rflags[row], ndownlocks, nuplocks );
 
@@ -476,14 +476,14 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
 
    Vec<std::pair<int, REAL>> penaltyvars;
 
-   for( int row : rowsWithPenaltySingletons )
+   for( int64_t row : rowsWithPenaltySingletons )
    {
       assert( rflags[row].test( RowFlag::kLhsInf ) ||
               rflags[row].test( RowFlag::kRhsInf ) );
       assert( !rflags[row].test( RowFlag::kLhsInf ) ||
               !rflags[row].test( RowFlag::kRhsInf ) );
 
-      int scale;
+      int64_t scale;
       REAL rhs;
       REAL maxresact = 0;
 
@@ -499,15 +499,15 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
       }
 
       auto rowvec = constMatrix.getRowCoefficients( row );
-      const int* rowinds = rowvec.getIndices();
+      const int64_t* rowinds = rowvec.getIndices();
       const REAL* rowvals = rowvec.getValues();
-      const int len = rowvec.getLength();
+      const int64_t len = rowvec.getLength();
 
       // TODO do singleton stuffing
       bool suitable = true;
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
       {
-         int col = rowinds[i];
+         int64_t col = rowinds[i];
          REAL coeff = scale * rowvals[i];
 
          // if the column is a singleton and not integral it could be a
@@ -580,7 +580,7 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
          continue;
       }
 
-      int npenaltyvars = penaltyvars.size();
+      int64_t npenaltyvars = penaltyvars.size();
 
       pdqsort( penaltyvars.begin(), penaltyvars.end(),
                [&]( const std::pair<int, REAL>& c1,
@@ -592,7 +592,7 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
       std::size_t k = 0;
       while( k < penaltyvars.size() && num.isFeasLT( rhs, 0 ) )
       {
-         int col = penaltyvars[k].first;
+         int64_t col = penaltyvars[k].first;
          const REAL& coeff = penaltyvars[k].second;
 
          // for non-singletons or singletons that where not handled in the
@@ -628,7 +628,7 @@ SingletonStuffing<REAL>::execute( const Problem<REAL>& problem,
 
          while( k < penaltyvars.size() )
          {
-            int col = penaltyvars[k].first;
+            int64_t col = penaltyvars[k].first;
             const REAL& coeff = penaltyvars[k].second;
 
             if( coeff < 0 )

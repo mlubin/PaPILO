@@ -77,12 +77,12 @@ CoefficientStrengthening<REAL>::execute(
 
    Vec<std::pair<REAL, int>> integerCoefficients;
 
-   for( int i : changedactivities )
+   for( int64_t i : changedactivities )
    {
       auto rowcoefficients = constMatrix.getRowCoefficients( i );
       const REAL* coefficients = rowcoefficients.getValues();
-      const int len = rowcoefficients.getLength();
-      const int* coefindices = rowcoefficients.getIndices();
+      const int64_t len = rowcoefficients.getLength();
+      const int64_t* coefindices = rowcoefficients.getIndices();
 
       if( ( !rflags[i].test( RowFlag::kLhsInf ) &&
             !rflags[i].test( RowFlag::kRhsInf ) ) ||
@@ -91,7 +91,7 @@ CoefficientStrengthening<REAL>::execute(
 
       REAL rhs;
       REAL maxact;
-      int scale;
+      int64_t scale;
 
       // normalize constraint to a * x <= b constraint, remember if it was
       // scaled by -1
@@ -131,7 +131,7 @@ CoefficientStrengthening<REAL>::execute(
       else if( num.isFeasEq( newabscoef, ceil( newabscoef ) ) )
          newabscoef = ceil( newabscoef );
 
-      for( int k = 0; k != len; ++k )
+      for( int64_t k = 0; k != len; ++k )
       {
          if( !cflags[coefindices[k]].test( ColFlag::kIntegral,
                                            ColFlag::kImplInt ) ||

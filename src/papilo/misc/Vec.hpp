@@ -32,7 +32,7 @@ namespace papilo
 template <typename T>
 using Vec = std::vector<T, Allocator<T>>;
 
-template <typename T, int N>
+template <typename T, int64_t N>
 using SmallVec = boost::container::small_vector<T, N, Allocator<T>>;
 
 } // namespace papilo

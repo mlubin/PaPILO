@@ -38,7 +38,7 @@ namespace papilo
 template <typename REAL>
 class Substitution : public PresolveMethod<REAL>
 {
-   Vec<int> ntried;
+   Vec<int64_t> ntried;
 
  public:
    Substitution() : PresolveMethod<REAL>()
@@ -48,7 +48,7 @@ class Substitution : public PresolveMethod<REAL>
    }
 
    void
-   compress( const Vec<int>& rowmap, const Vec<int>& colmap ) override
+   compress( const Vec<int64_t>& rowmap, const Vec<int64_t>& colmap ) override
    {
       assert( rowmap.size() == ntried.size() );
       compress_vector( rowmap, ntried );
@@ -124,7 +124,7 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
    using Equality = std::tuple<SparseVectorView<REAL>, int>;
    Vec<Equality> equalities;
    equalities.reserve( nrows );
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       if( rflags[i].test( RowFlag::kRedundant ) ||
           !rflags[i].test( RowFlag::kEquation ) ||
@@ -149,20 +149,20 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
 
    boost::dynamic_bitset<> colUnusable( ncols );
    boost::dynamic_bitset<> touchedRows( nrows );
-   Vec<int> colcands;
+   Vec<int64_t> colcands;
    colcands.reserve( ncols );
 
    for( auto equality : equalities )
    {
-      int row = std::get<1>( equality );
-      const int length = std::get<0>( equality ).getLength();
-      const int* rowindices = std::get<0>( equality ).getIndices();
+      int64_t row = std::get<1>( equality );
+      const int64_t length = std::get<0>( equality ).getLength();
+      const int64_t* rowindices = std::get<0>( equality ).getIndices();
       const REAL* rowvalues = std::get<0>( equality ).getValues();
       REAL maxabsvalue = std::get<0>( equality ).getMaxAbsValue();
       REAL minabsintvalue = maxabsvalue;
       bool containsContinuous = false;
       bool containsNonBinInt = false;
-      for( int i = 0; i != length; ++i )
+      for( int64_t i = 0; i != length; ++i )
       {
          if( !cflags[rowindices[i]].test( ColFlag::kIntegral ) )
          {
@@ -187,7 +187,7 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
       if( !containsContinuous )
       {
          bool divisible = true;
-         for( int i = 0; i != length; ++i )
+         for( int64_t i = 0; i != length; ++i )
          {
             if( !num.isIntegral( rowvalues[i] / minabsintvalue ) )
             {
@@ -203,9 +203,9 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
 
       colcands.clear();
 
-      for( int i = 0; i < length; ++i )
+      for( int64_t i = 0; i < length; ++i )
       {
-         int col = rowindices[i];
+         int64_t col = rowindices[i];
          auto colvec = constMatrix.getColumnCoefficients( col );
 
          // if the column has been already used for a substitution or known
@@ -238,15 +238,15 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
          colcands.push_back( i );
       }
 
-      pdqsort( colcands.begin(), colcands.end(), [&]( int i1, int i2 ) {
-         int col1 = rowindices[i1];
-         int col2 = rowindices[i2];
+      pdqsort( colcands.begin(), colcands.end(), [&]( int64_t i1, int64_t i2 ) {
+         int64_t col1 = rowindices[i1];
+         int64_t col2 = rowindices[i2];
          return problemUpdate.isColBetterForSubstitution( col1, col2 );
       } );
 
-      for( int i : colcands )
+      for( int64_t i : colcands )
       {
-         int col = rowindices[i];
+         int64_t col = rowindices[i];
          auto colvec = constMatrix.getColumnCoefficients( col );
 
          // check the numerics conditions
@@ -258,8 +258,8 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
                        colvec.getMaxAbsValue() ) )
             continue;
 
-         int lbrowlock = -1;
-         int ubrowlock = -1;
+         int64_t lbrowlock = -1;
+         int64_t ubrowlock = -1;
 
          // mark the column to not be used in later substitutions, because
          // it's either not free or used for this substitution
@@ -275,16 +275,16 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
                              upper_bounds[col], cflags[col] );
 
          const REAL* colvalues = colvec.getValues();
-         const int* colindices = colvec.getIndices();
-         const int collength = colvec.getLength();
+         const int64_t* colindices = colvec.getIndices();
+         const int64_t collength = colvec.getLength();
 
          auto checkIfImpliedFree = [&]( bool checkTouchedRows ) {
-            int j = 0;
+            int64_t j = 0;
 
             while( ( !upperboundImplied || !lowerboundImplied ) &&
                    j != collength )
             {
-               int colrow = colindices[j];
+               int64_t colrow = colindices[j];
                REAL colval = colvalues[j];
                ++j;
 
@@ -343,10 +343,10 @@ Substitution<REAL>::execute( const Problem<REAL>& problem,
             reductions.lockColBounds( col );
 
             reductions.aggregateFreeCol( col, row );
-            const int* colindices = colvec.getIndices();
-            const int collength = colvec.getLength();
+            const int64_t* colindices = colvec.getIndices();
+            const int64_t collength = colvec.getLength();
 
-            for( int i = 0; i != collength; ++i )
+            for( int64_t i = 0; i != collength; ++i )
                touchedRows.set( colindices[i] );
 
             break;

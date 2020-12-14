@@ -44,9 +44,9 @@ namespace papilo
 template <typename REAL>
 class Probing : public PresolveMethod<REAL>
 {
-   Vec<int> nprobed;
-   int maxinitialbadgesize = 1000;
-   int minbadgesize = 10;
+   Vec<int64_t> nprobed;
+   int64_t maxinitialbadgesize = 1000;
+   int64_t minbadgesize = 10;
    double mincontdomred = 0.3;
 
  public:
@@ -58,7 +58,7 @@ class Probing : public PresolveMethod<REAL>
    }
 
    void
-   compress( const Vec<int>& rowmap, const Vec<int>& colmap ) override
+   compress( const Vec<int64_t>& rowmap, const Vec<int64_t>& colmap ) override
    {
       assert( colmap.size() == nprobed.size() );
       compress_vector( colmap, nprobed );
@@ -132,14 +132,14 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
    const auto& rhs = consMatrix.getRightHandSides();
    const auto& rflags = consMatrix.getRowFlags();
    const auto& activities = problem.getRowActivities();
-   const int ncols = problem.getNCols();
+   const int64_t ncols = problem.getNCols();
    const auto& colsize = consMatrix.getColSizes();
    const auto& colperm = problemUpdate.getRandomColPerm();
 
-   Vec<int> probing_cands;
+   Vec<int64_t> probing_cands;
    probing_cands.reserve( ncols );
 
-   for( int i = 0; i != ncols; ++i )
+   for( int64_t i = 0; i != ncols; ++i )
    {
       if( !cflags[i].test( ColFlag::kUnbounded ) &&
           cflags[i].test( ColFlag::kIntegral ) && colsize[i] > 0 &&
@@ -152,7 +152,7 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
 
    Array<std::atomic_int> probing_scores( ncols );
 
-   for( int i = 0; i != ncols; ++i )
+   for( int64_t i = 0; i != ncols; ++i )
       probing_scores[i].store( 0, std::memory_order_relaxed );
 
    if( nprobed.size() == 0 )
@@ -161,14 +161,14 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
 
       assert( static_cast<int>( nprobed.size() ) == ncols );
       assert( std::all_of( nprobed.begin(), nprobed.end(),
-                           []( int n ) { return n == 0; } ) );
+                           []( int64_t n ) { return n == 0; } ) );
    }
 
    tbb::parallel_for(
-       tbb::blocked_range<int>( 0, problem.getNRows() ),
-       [&]( const tbb::blocked_range<int>& r ) {
+       tbb::blocked_range<int64_t>( 0, problem.getNRows() ),
+       [&]( const tbb::blocked_range<int64_t>& r ) {
           Vec<std::pair<REAL, int>> binvarsRow;
-          for( int row = r.begin(); row != r.end(); ++row )
+          for( int64_t row = r.begin(); row != r.end(); ++row )
           {
              if( consMatrix.isRowRedundant( row ) )
                 continue;
@@ -180,13 +180,13 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
                 continue;
 
              auto rowvec = consMatrix.getRowCoefficients( row );
-             const int* colinds = rowvec.getIndices();
+             const int64_t* colinds = rowvec.getIndices();
              const REAL* rowvals = rowvec.getValues();
-             const int rowlen = rowvec.getLength();
+             const int64_t rowlen = rowvec.getLength();
 
              binvarsRow.reserve( rowlen );
 
-             for( int i = 0; i != rowlen; ++i )
+             for( int64_t i = 0; i != rowlen; ++i )
              {
                 if( cflags[colinds[i]].test( ColFlag::kIntegral ) &&
                     lower_bounds[colinds[i]] == 0.0 &&
@@ -194,7 +194,7 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
                    binvarsRow.emplace_back( rowvals[i], colinds[i] );
              }
 
-             const int nbinvarsrow = static_cast<int>( binvarsRow.size() );
+             const int64_t nbinvarsrow = static_cast<int>( binvarsRow.size() );
 
              if( nbinvarsrow == 0 )
                 continue;
@@ -205,9 +205,9 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
                          return abs( a.first ) > abs( b.first );
                       } );
 
-             for( int i = 0; i != nbinvarsrow; ++i )
+             for( int64_t i = 0; i != nbinvarsrow; ++i )
              {
-                int col = binvarsRow[i].second;
+                int64_t col = binvarsRow[i].second;
                 REAL abscoef = abs( binvarsRow[i].first );
                 REAL minimplcoef = abscoef;
 
@@ -226,8 +226,8 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
                 if( num.isFeasLE( abscoef, minimplcoef ) )
                    break;
 
-                int nimplbins = 0;
-                for( int j = i + 1; j != nbinvarsrow; ++j )
+                int64_t nimplbins = 0;
+                for( int64_t j = i + 1; j != nbinvarsrow; ++j )
                 {
                    if( num.isFeasGT( abs( binvarsRow[j].first ), minimplcoef ) )
                       ++nimplbins;
@@ -247,7 +247,7 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
        } );
 
    pdqsort( probing_cands.begin(), probing_cands.end(),
-            [this, &probing_scores, &colsize, &colperm]( int col1, int col2 ) {
+            [this, &probing_scores, &colsize, &colperm]( int64_t col1, int64_t col2 ) {
                std::pair<double, double> s1;
                std::pair<double, double> s2;
                if( nprobed[col2] == 0 && probing_scores[col2] > 0 )
@@ -272,23 +272,23 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
 
    const auto& rowsize = consMatrix.getRowSizes();
 
-   HashMap<std::pair<int, int>, int, boost::hash<std::pair<int, int>>>
+   HashMap<std::pair<int64_t, int64_t>, int64_t, boost::hash<std::pair<int64_t, int64_t>>>
        substitutionsPos;
    Vec<ProbingSubstitution<REAL>> substitutions;
-   Vec<int> boundPos( size_t( 2 * ncols ), 0 );
+   Vec<int64_t> boundPos( size_t( 2 * ncols ), 0 );
    Vec<ProbingBoundChg<REAL>> boundChanges;
    boundChanges.reserve( ncols );
 
    std::atomic_bool infeasible{ false };
 
-   int currentbadgestart = 0;
+   int64_t currentbadgestart = 0;
 
    int64_t workinglimit = consMatrix.getNnz() * 2;
 
-   const int nprobingcands = static_cast<int>( probing_cands.size() );
-   int badgesize = 0;
-   int initialbadgelim = 0.1 * workinglimit;
-   for( int i : probing_cands )
+   const int64_t nprobingcands = static_cast<int>( probing_cands.size() );
+   int64_t badgesize = 0;
+   int64_t initialbadgelim = 0.1 * workinglimit;
+   for( int64_t i : probing_cands )
    {
       ++badgesize;
 
@@ -300,8 +300,8 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
          break;
 
       auto colvec = consMatrix.getColumnCoefficients( i );
-      const int* rowinds = colvec.getIndices();
-      for( int k = 0; k != colvec.getLength(); ++k )
+      const int64_t* rowinds = colvec.getIndices();
+      for( int64_t k = 0; k != colvec.getLength(); ++k )
       {
          initialbadgelim -= ( rowsize[rowinds[k]] - 1 );
 
@@ -315,8 +315,8 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
 
    badgesize = std::max( std::min( nprobingcands, minbadgesize ), badgesize );
 
-   int currentbadgeend = currentbadgestart + badgesize;
-   int nuseless = 0;
+   int64_t currentbadgeend = currentbadgestart + badgesize;
+   int64_t nuseless = 0;
    bool abort = false;
 
    // use tbb combinable so that each thread will copy the activities and
@@ -333,13 +333,13 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
                       currentbadgeend );
 
       tbb::parallel_for(
-          tbb::blocked_range<int>( currentbadgestart, currentbadgeend ),
-          [&]( const tbb::blocked_range<int>& r ) {
+          tbb::blocked_range<int64_t>( currentbadgestart, currentbadgeend ),
+          [&]( const tbb::blocked_range<int64_t>& r ) {
              ProbingView<REAL>& probingView = probing_views.local();
 
-             for( int i = r.begin(); i != r.end(); ++i )
+             for( int64_t i = r.begin(); i != r.end(); ++i )
              {
-                const int col = probing_cands[i];
+                const int64_t col = probing_cands[i];
 
                 assert( cflags[col].test( ColFlag::kIntegral ) &&
                             lower_bounds[col] == 0 ||
@@ -378,9 +378,9 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
          return PresolveStatus::kInfeasible;
 
       int64_t amountofwork = 0;
-      int nfixings = 0;
-      int nboundchgs = 0;
-      int nsubstitutions = -substitutions.size();
+      int64_t nfixings = 0;
+      int64_t nboundchgs = 0;
+      int64_t nsubstitutions = -substitutions.size();
 
       probing_views.combine_each( [&]( ProbingView<REAL>& probingView ) {
          const auto& probingBoundChgs = probingView.getProbingBoundChanges();
@@ -516,7 +516,7 @@ Probing<REAL>::execute( const Problem<REAL>& problem,
                          std::make_pair( b.col1, b.col2 );
                } );
 
-      int lastsubstcol = -1;
+      int64_t lastsubstcol = -1;
 
       for( const ProbingSubstitution<REAL>& subst : substitutions )
       {

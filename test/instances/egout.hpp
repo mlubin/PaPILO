@@ -468,8 +468,8 @@ egout()
        "F.035036", "F.037038", "F.038040", "F.039040", "F.040...", "F.041...",
        "F.040041", "F.041042", "F.042...",
    };
-   int nCols = 141;
-   int nRows = 98;
+   int64_t nCols = 141;
+   int64_t nRows = 98;
    ProblemBuilder<double> pb;
    pb.reserve( 282, 98, 141 );
    pb.setNumRows( nRows );

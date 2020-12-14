@@ -46,11 +46,11 @@ class ScipInterface : public SolverInterface<REAL>
    Vec<SCIP_VAR*> vars;
 
    SCIP_RETCODE
-   doSetUp( const Problem<REAL>& problem, const Vec<int>& origRowMap,
-            const Vec<int>& origColMap )
+   doSetUp( const Problem<REAL>& problem, const Vec<int64_t>& origRowMap,
+            const Vec<int64_t>& origColMap )
    {
-      int ncols = problem.getNCols();
-      int nrows = problem.getNRows();
+      int64_t ncols = problem.getNCols();
+      int64_t nrows = problem.getNRows();
       const Vec<String>& varNames = problem.getVariableNames();
       const Vec<String>& consNames = problem.getConstraintNames();
       const VariableDomains<REAL>& domains = problem.getVariableDomains();
@@ -64,7 +64,7 @@ class ScipInterface : public SolverInterface<REAL>
 
       vars.resize( problem.getNCols() );
 
-      for( int i = 0; i < ncols; ++i )
+      for( int64_t i = 0; i < ncols; ++i )
       {
          SCIP_VAR* var;
          assert( !domains.flags[i].test( ColFlag::kInactive ) );
@@ -102,13 +102,13 @@ class ScipInterface : public SolverInterface<REAL>
       consvars.resize( problem.getNCols() );
       consvals.resize( problem.getNCols() );
 
-      for( int i = 0; i < nrows; ++i )
+      for( int64_t i = 0; i < nrows; ++i )
       {
          SCIP_CONS* cons;
 
          auto rowvec = consMatrix.getRowCoefficients( i );
          const REAL* vals = rowvec.getValues();
-         const int* inds = rowvec.getIndices();
+         const int64_t* inds = rowvec.getIndices();
          SCIP_Real lhs = rflags[i].test( RowFlag::kLhsInf )
                              ? -SCIPinfinity( scip )
                              : SCIP_Real( lhs_values[i] );
@@ -116,7 +116,7 @@ class ScipInterface : public SolverInterface<REAL>
                              ? SCIPinfinity( scip )
                              : SCIP_Real( rhs_values[i] );
 
-         for( int k = 0; k != rowvec.getLength(); ++k )
+         for( int64_t k = 0; k != rowvec.getLength(); ++k )
          {
             consvars[k] = vars[inds[k]];
             consvals[k] = SCIP_Real( vals[k] );
@@ -136,14 +136,14 @@ class ScipInterface : public SolverInterface<REAL>
    }
 
    SCIP_RETCODE
-   doSetUp( const Problem<REAL>& problem, const Vec<int>& origRowMap,
-            const Vec<int>& origColMap, const Components& components,
+   doSetUp( const Problem<REAL>& problem, const Vec<int64_t>& origRowMap,
+            const Vec<int64_t>& origColMap, const Components& components,
             const ComponentInfo& component )
    {
-      int ncols = components.getComponentsNumCols( component.componentid );
-      int nrows = components.getComponentsNumRows( component.componentid );
-      const int* colset = components.getComponentsCols( component.componentid );
-      const int* rowset = components.getComponentsRows( component.componentid );
+      int64_t ncols = components.getComponentsNumCols( component.componentid );
+      int64_t nrows = components.getComponentsNumRows( component.componentid );
+      const int64_t* colset = components.getComponentsCols( component.componentid );
+      const int64_t* rowset = components.getComponentsRows( component.componentid );
       const Vec<String>& varNames = problem.getVariableNames();
       const Vec<String>& consNames = problem.getConstraintNames();
       const VariableDomains<REAL>& domains = problem.getVariableDomains();
@@ -157,9 +157,9 @@ class ScipInterface : public SolverInterface<REAL>
 
       vars.resize( ncols );
 
-      for( int i = 0; i < ncols; ++i )
+      for( int64_t i = 0; i < ncols; ++i )
       {
-         int col = colset[i];
+         int64_t col = colset[i];
          SCIP_VAR* var;
          assert( !domains.flags[col].test( ColFlag::kInactive ) );
 
@@ -194,14 +194,14 @@ class ScipInterface : public SolverInterface<REAL>
       consvars.resize( ncols );
       consvals.resize( ncols );
 
-      for( int i = 0; i < nrows; ++i )
+      for( int64_t i = 0; i < nrows; ++i )
       {
-         int row = rowset[i];
+         int64_t row = rowset[i];
          SCIP_CONS* cons;
 
          auto rowvec = consMatrix.getRowCoefficients( row );
          const REAL* vals = rowvec.getValues();
-         const int* inds = rowvec.getIndices();
+         const int64_t* inds = rowvec.getIndices();
          SCIP_Real lhs = rflags[row].test( RowFlag::kLhsInf )
                              ? -SCIPinfinity( scip )
                              : SCIP_Real( lhs_values[row] );
@@ -209,7 +209,7 @@ class ScipInterface : public SolverInterface<REAL>
                              ? SCIPinfinity( scip )
                              : SCIP_Real( rhs_values[row] );
 
-         for( int k = 0; k != rowvec.getLength(); ++k )
+         for( int64_t k = 0; k != rowvec.getLength(); ++k )
          {
             consvars[k] = vars[components.getColComponentIdx( inds[k] )];
             consvals[k] = SCIP_Real( vals[k] );
@@ -249,8 +249,8 @@ class ScipInterface : public SolverInterface<REAL>
    }
 
    void
-   setUp( const Problem<REAL>& prob, const Vec<int>& row_maps,
-          const Vec<int>& col_maps, const Components& components,
+   setUp( const Problem<REAL>& prob, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps, const Components& components,
           const ComponentInfo& component ) override
    {
       if( doSetUp( prob, row_maps, col_maps, components, component ) !=
@@ -318,8 +318,8 @@ class ScipInterface : public SolverInterface<REAL>
    }
 
    void
-   setUp( const Problem<REAL>& prob, const Vec<int>& row_maps,
-          const Vec<int>& col_maps ) override
+   setUp( const Problem<REAL>& prob, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps ) override
    {
       if( doSetUp( prob, row_maps, col_maps ) != SCIP_OKAY )
          this->status = SolverStatus::kError;
@@ -421,7 +421,7 @@ class ScipInterface : public SolverInterface<REAL>
    }
 
    bool
-   getSolution( const Components& components, int component,
+   getSolution( const Components& components, int64_t component,
                 Solution<REAL>& solbuffer ) override
    {
       SCIP_SOL* sol = SCIPgetBestSol( scip );
@@ -434,7 +434,7 @@ class ScipInterface : public SolverInterface<REAL>
          SCIP_SOL* finitesol;
          SCIP_Bool success;
 
-         const int* colset = components.getComponentsCols( component );
+         const int64_t* colset = components.getComponentsCols( component );
          assert( components.getComponentsNumCols( component ) == vars.size() );
 
          SCIP_CALL_ABORT(

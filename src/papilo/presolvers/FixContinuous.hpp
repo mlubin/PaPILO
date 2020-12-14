@@ -72,14 +72,14 @@ FixContinuous<REAL>::execute( const Problem<REAL>& problem,
    const auto& lbs = problem.getLowerBounds();
    const auto& ubs = problem.getUpperBounds();
 
-   const int ncols = consMatrix.getNCols();
+   const int64_t ncols = consMatrix.getNCols();
    const auto& colsize = consMatrix.getColSizes();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
    if( num.getFeasTol() == REAL{ 0 } )
       return result;
 
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       // dont fix removed or empty columns, integral columns, columns with
       // infinity bounds, columns that are already fixed, and columns whose

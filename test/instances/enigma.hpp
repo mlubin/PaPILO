@@ -409,8 +409,8 @@ enigma()
        "I0",  "I1",  "I2",  "I3",  "I4",  "I5",  "I6",  "I7",  "I8",  "I9",
        "L0",  "L1",  "L2",  "L3",  "L4",  "L5",  "L6",  "L7",  "L8",  "L9",
    };
-   int nCols = 100;
-   int nRows = 21;
+   int64_t nCols = 100;
+   int64_t nRows = 21;
    ProblemBuilder<double> pb;
    pb.reserve( 289, 21, 100 );
    pb.setNumRows( nRows );

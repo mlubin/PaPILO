@@ -29,7 +29,7 @@
 namespace papilo
 {
 
-template <typename T, int = 0>
+template <typename T, int64_t = 0>
 struct AllocatorTraits
 {
    using type = std::allocator<T>;

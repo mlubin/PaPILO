@@ -35,10 +35,10 @@ namespace papilo
 
 struct ComponentInfo
 {
-   int componentid;
-   int nintegral;
-   int ncontinuous;
-   int nnonz;
+   int64_t componentid;
+   int64_t nintegral;
+   int64_t ncontinuous;
+   int64_t nnonz;
 
    bool
    operator<( const ComponentInfo& other ) const
@@ -52,47 +52,47 @@ struct ComponentInfo
 class Components
 {
  private:
-   Vec<int> col2comp;
-   Vec<int> row2comp;
-   Vec<int> compcols;
-   Vec<int> comprows;
-   Vec<int> compcolstart;
-   Vec<int> comprowstart;
+   Vec<int64_t> col2comp;
+   Vec<int64_t> row2comp;
+   Vec<int64_t> compcols;
+   Vec<int64_t> comprows;
+   Vec<int64_t> compcolstart;
+   Vec<int64_t> comprowstart;
    Vec<ComponentInfo> compInfo;
 
  public:
-   const int*
-   getComponentsRows( int c ) const
+   const int64_t*
+   getComponentsRows( int64_t c ) const
    {
       return &comprows[comprowstart[c]];
    }
 
-   int
-   getComponentsNumRows( int c ) const
+   int64_t
+   getComponentsNumRows( int64_t c ) const
    {
       return comprowstart[c + 1] - comprowstart[c];
    }
 
-   int
-   getRowComponentIdx( int row ) const
+   int64_t
+   getRowComponentIdx( int64_t row ) const
    {
       return row2comp[row];
    }
 
-   const int*
-   getComponentsCols( int c ) const
+   const int64_t*
+   getComponentsCols( int64_t c ) const
    {
       return &compcols[compcolstart[c]];
    }
 
-   int
-   getComponentsNumCols( int c ) const
+   int64_t
+   getComponentsNumCols( int64_t c ) const
    {
       return compcolstart[c + 1] - compcolstart[c];
    }
 
-   int
-   getColComponentIdx( int col ) const
+   int64_t
+   getColComponentIdx( int64_t col ) const
    {
       return col2comp[col];
    }
@@ -104,52 +104,52 @@ class Components
    }
 
    template <typename REAL>
-   int
+   int64_t
    detectComponents( const Problem<REAL>& problem )
    {
-      const int ncols = problem.getNCols();
-      std::unique_ptr<int[]> rank{ new int[ncols] };
-      std::unique_ptr<int[]> parent{ new int[ncols] };
-      boost::disjoint_sets<int*, int*> djsets( rank.get(), parent.get() );
+      const int64_t ncols = problem.getNCols();
+      std::unique_ptr<int64_t[]> rank{ new int64_t[ncols] };
+      std::unique_ptr<int64_t[]> parent{ new int64_t[ncols] };
+      boost::disjoint_sets<int64_t*, int64_t*> djsets( rank.get(), parent.get() );
 
-      for( int i = 0; i != ncols; ++i )
+      for( int64_t i = 0; i != ncols; ++i )
          djsets.make_set( i );
 
       const ConstraintMatrix<REAL>& consMatrix = problem.getConstraintMatrix();
       const IndexRange* ranges;
-      int nrows;
+      int64_t nrows;
 
       std::tie( ranges, nrows ) = consMatrix.getRangeInfo();
-      const int* colinds = consMatrix.getColumns();
+      const int64_t* colinds = consMatrix.getColumns();
 
-      for( int r = 0; r != nrows; ++r )
+      for( int64_t r = 0; r != nrows; ++r )
       {
          if( ranges[r].end - ranges[r].start <= 1 )
             continue;
 
-         int firstcol = colinds[ranges[r].start];
+         int64_t firstcol = colinds[ranges[r].start];
 
-         for( int i = ranges[r].start + 1; i != ranges[r].end; ++i )
+         for( int64_t i = ranges[r].start + 1; i != ranges[r].end; ++i )
             djsets.link( firstcol, colinds[i] );
       }
 
-      HashMap<int, int> componentmap;
+      HashMap<int64_t, int64_t> componentmap;
 
-      for( int i = 0; i != ncols; ++i )
+      for( int64_t i = 0; i != ncols; ++i )
       {
-         int nextid = static_cast<int>( componentmap.size() );
+         int64_t nextid = static_cast<int64_t>( componentmap.size() );
          auto insert_result =
              componentmap.insert( { djsets.find_set( i ), nextid } );
       }
 
-      int numcomponents = static_cast<int>( componentmap.size() );
+      int64_t numcomponents = static_cast<int64_t>( componentmap.size() );
 
       if( numcomponents > 1 )
       {
          col2comp.resize( ncols );
          compcols.resize( ncols );
 
-         for( int i = 0; i != ncols; ++i )
+         for( int64_t i = 0; i != ncols; ++i )
          {
             col2comp[i] = componentmap[djsets.find_set( i )];
             compcols[i] = i;
@@ -157,24 +157,24 @@ class Components
 
          row2comp.resize( nrows );
          comprows.resize( nrows );
-         for( int i = 0; i != nrows; ++i )
+         for( int64_t i = 0; i != nrows; ++i )
          {
             assert( problem.getConstraintMatrix()
                         .getRowCoefficients( i )
                         .getLength() > 0 );
-            int col = problem.getConstraintMatrix()
+            int64_t col = problem.getConstraintMatrix()
                           .getRowCoefficients( i )
                           .getIndices()[0];
             row2comp[i] = col2comp[col];
             comprows[i] = i;
          }
 
-         pdqsort( compcols.begin(), compcols.end(), [&]( int col1, int col2 ) {
+         pdqsort( compcols.begin(), compcols.end(), [&]( int64_t col1, int64_t col2 ) {
             return col2comp[col1] < col2comp[col2];
          } );
 
          compcolstart.resize( numcomponents + 1 );
-         int k = 0;
+         int64_t k = 0;
 
          // first component starts at 0
          compcolstart[0] = 0;
@@ -182,7 +182,7 @@ class Components
          // fill out starts for second to last components, also reuse the
          // col2comp vector to map the columns of a component to indices
          // starting at 0 without gaps
-         for( int i = 1; i != numcomponents; ++i )
+         for( int64_t i = 1; i != numcomponents; ++i )
          {
             while( k != ncols && col2comp[compcols[k]] == i - 1 )
             {
@@ -203,7 +203,7 @@ class Components
          // last component ends at ncols
          compcolstart[numcomponents] = ncols;
 
-         pdqsort( comprows.begin(), comprows.end(), [&]( int row1, int row2 ) {
+         pdqsort( comprows.begin(), comprows.end(), [&]( int64_t row1, int64_t row2 ) {
             return row2comp[row1] < row2comp[row2];
          } );
 
@@ -215,7 +215,7 @@ class Components
          // fill out starts for second to last components, also reuse the
          // row2comp vector to map the rows of a component to indices starting
          // at 0 without gaps
-         for( int i = 1; i != numcomponents; ++i )
+         for( int64_t i = 1; i != numcomponents; ++i )
          {
             while( k != nrows && row2comp[comprows[k]] == i - 1 )
             {
@@ -240,9 +240,9 @@ class Components
          const auto& colsizes = problem.getColSizes();
          const auto& cflags = problem.getColFlags();
 
-         for( int i = 0; i != numcomponents; ++i )
+         for( int64_t i = 0; i != numcomponents; ++i )
          {
-            for( int j = compcolstart[i]; j != compcolstart[i + 1]; ++j )
+            for( int64_t j = compcolstart[i]; j != compcolstart[i + 1]; ++j )
             {
                if( cflags[compcols[j]].test( ColFlag::kIntegral ) )
                   ++compInfo[i].nintegral;

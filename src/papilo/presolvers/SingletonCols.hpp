@@ -83,8 +83,8 @@ SingletonCols<REAL>::execute( const Problem<REAL>& problem,
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
-   auto handleEquation = [&]( int col, bool lbimplied, bool ubimplied,
-                              const REAL& val, int row, bool impliedeq,
+   auto handleEquation = [&]( int64_t col, bool lbimplied, bool ubimplied,
+                              const REAL& val, int64_t row, bool impliedeq,
                               const REAL& side ) {
       if( !impliedeq && rowsize[row] <= 1 )
          return;
@@ -159,15 +159,15 @@ SingletonCols<REAL>::execute( const Problem<REAL>& problem,
       }
    };
 
-   int firstNewSingleton = problemUpdate.getFirstNewSingletonCol();
+   int64_t firstNewSingleton = problemUpdate.getFirstNewSingletonCol();
    for( std::size_t i = firstNewSingleton; i != singletonCols.size(); ++i )
    {
-      int col = singletonCols[i];
+      int64_t col = singletonCols[i];
 
       assert( colsize[col] == 1 );
       assert( constMatrix.getColumnCoefficients( col ).getLength() == 1 );
 
-      int row = constMatrix.getColumnCoefficients( col ).getIndices()[0];
+      int64_t row = constMatrix.getColumnCoefficients( col ).getIndices()[0];
 
       const REAL& val = constMatrix.getColumnCoefficients( col ).getValues()[0];
 
@@ -210,9 +210,9 @@ SingletonCols<REAL>::execute( const Problem<REAL>& problem,
             bool unsuitableForSubstitution = false;
 
             auto rowvec = constMatrix.getRowCoefficients( row );
-            const int* rowinds = rowvec.getIndices();
+            const int64_t* rowinds = rowvec.getIndices();
             const REAL* rowvals = rowvec.getValues();
-            for( int i = 0; i != rowvec.getLength(); ++i )
+            for( int64_t i = 0; i != rowvec.getLength(); ++i )
             {
                if( rowinds[i] == col )
                   continue;
@@ -251,8 +251,8 @@ SingletonCols<REAL>::execute( const Problem<REAL>& problem,
             continue;
       }
 
-      int nuplocks = 0;
-      int ndownlocks = 0;
+      int64_t nuplocks = 0;
+      int64_t ndownlocks = 0;
 
       count_locks( val, rflags[row], ndownlocks, nuplocks );
 

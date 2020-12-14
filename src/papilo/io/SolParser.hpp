@@ -43,14 +43,14 @@ struct SolParser
 {
 
    static Solution<REAL>
-   read( std::ifstream& file, const Vec<int>& origcol_mapping,
+   read( std::ifstream& file, const Vec<int64_t>& origcol_mapping,
          const Vec<String>& colnames )
    {
       HashMap<String, int> nameToCol;
 
       for( size_t i = 0; i != origcol_mapping.size(); ++i )
       {
-         int origcol = origcol_mapping[i];
+         int64_t origcol = origcol_mapping[i];
          nameToCol.emplace( colnames[origcol], i );
       }
 

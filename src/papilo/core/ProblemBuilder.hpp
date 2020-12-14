@@ -41,7 +41,7 @@ class ProblemBuilder
    /// If the number of columns is reduced, then the information for the removed
    /// columns is lost.
    void
-   setNumCols( int ncols )
+   setNumCols( int64_t ncols )
    {
       // allocate column information
       obj.coefficients.resize( ncols );
@@ -56,7 +56,7 @@ class ProblemBuilder
    /// If the number of rows is reduced, then the information for the removed
    /// rows is lost.
    void
-   setNumRows( int nrows )
+   setNumRows( int64_t nrows )
    {
       // allocate row information
       lhs.resize( nrows );
@@ -81,7 +81,7 @@ class ProblemBuilder
 
    /// reserve storage for the given number of non-zeros
    void
-   reserve( int nnz, int nrows, int ncols )
+   reserve( int64_t nnz, int64_t nrows, int64_t ncols )
    {
       matrix_buffer.reserve( nnz );
 
@@ -101,7 +101,7 @@ class ProblemBuilder
 
    /// change the objective coefficient of a column
    void
-   setObj( int col, REAL val )
+   setObj( int64_t col, REAL val )
    {
       obj.coefficients[col] = std::move( val );
    }
@@ -111,7 +111,7 @@ class ProblemBuilder
    setObjAll( Vec<REAL> values )
    {
       assert( values.size() == obj.coefficients.size() );
-      for( int c = 0; c < values.size(); ++c )
+      for( int64_t c = 0; c < values.size(); ++c )
          obj.coefficients[c] = std::move( values[c] );
    }
 
@@ -123,7 +123,7 @@ class ProblemBuilder
    }
 
    void
-   setColLbInf( int col, bool isInfinite )
+   setColLbInf( int64_t col, bool isInfinite )
    {
       if( isInfinite )
          domains.flags[col].set( ColFlag::kLbInf );
@@ -135,12 +135,12 @@ class ProblemBuilder
    setColLbInfAll( Vec<uint8_t> isInfinite )
    {
       assert( domains.flags.size() == isInfinite.size() );
-      for( int c = 0; c < isInfinite.size(); ++c )
+      for( int64_t c = 0; c < isInfinite.size(); ++c )
          setColLbInf( c, isInfinite[c] );
    }
 
    void
-   setColUbInf( int col, bool isInfinite )
+   setColUbInf( int64_t col, bool isInfinite )
    {
       if( isInfinite )
          domains.flags[col].set( ColFlag::kUbInf );
@@ -152,12 +152,12 @@ class ProblemBuilder
    setColUbInfAll( Vec<uint8_t> isInfinite )
    {
       assert( domains.flags.size() == isInfinite.size() );
-      for( int c = 0; c < isInfinite.size(); ++c )
+      for( int64_t c = 0; c < isInfinite.size(); ++c )
          setColUbInf( c, isInfinite[c] );
    }
 
    void
-   setColLb( int col, REAL lb )
+   setColLb( int64_t col, REAL lb )
    {
       domains.lower_bounds[col] = std::move( lb );
    }
@@ -166,12 +166,12 @@ class ProblemBuilder
    setColLbAll( Vec<REAL> lbs )
    {
       assert( lbs.size() == domains.lower_bounds.size() );
-      for( int c = 0; c < lbs.size(); ++c )
+      for( int64_t c = 0; c < lbs.size(); ++c )
          domains.lower_bounds[c] = std::move( lbs[c] );
    }
 
    void
-   setColUb( int col, REAL ub )
+   setColUb( int64_t col, REAL ub )
    {
       domains.upper_bounds[col] = std::move( ub );
    }
@@ -180,12 +180,12 @@ class ProblemBuilder
    setColUbAll( Vec<REAL> ubs )
    {
       assert( ubs.size() == domains.upper_bounds.size() );
-      for( int c = 0; c < ubs.size(); ++c )
+      for( int64_t c = 0; c < ubs.size(); ++c )
          domains.upper_bounds[c] = std::move( ubs[c] );
    }
 
    void
-   setColIntegral( int col, bool isIntegral )
+   setColIntegral( int64_t col, bool isIntegral )
    {
       if( isIntegral )
          domains.flags[col].set( ColFlag::kIntegral );
@@ -197,12 +197,12 @@ class ProblemBuilder
    setColIntegralAll( Vec<uint8_t> isIntegral )
    {
       assert( isIntegral.size() == domains.flags.size() );
-      for( int c = 0; c < isIntegral.size(); ++c )
+      for( int64_t c = 0; c < isIntegral.size(); ++c )
          setColIntegral( c, isIntegral[c] );
    }
 
    void
-   setRowLhsInf( int row, bool isInfinite )
+   setRowLhsInf( int64_t row, bool isInfinite )
    {
       if( isInfinite )
          rflags[row].set( RowFlag::kLhsInf );
@@ -214,12 +214,12 @@ class ProblemBuilder
    setRowLhsInfAll( Vec<uint8_t> isInfinite )
    {
       assert( isInfinite.size() == rflags.size() );
-      for( int r = 0; r < isInfinite.size(); ++r )
+      for( int64_t r = 0; r < isInfinite.size(); ++r )
          setRowLhsInf( r, isInfinite[r] );
    }
 
    void
-   setRowRhsInf( int row, bool isInfinite )
+   setRowRhsInf( int64_t row, bool isInfinite )
    {
       if( isInfinite )
          rflags[row].set( RowFlag::kRhsInf );
@@ -231,12 +231,12 @@ class ProblemBuilder
    setRowRhsInfAll( Vec<uint8_t> isInfinite )
    {
       assert( isInfinite.size() == rflags.size() );
-      for( int r = 0; r < isInfinite.size(); ++r )
+      for( int64_t r = 0; r < isInfinite.size(); ++r )
          setRowRhsInf( r, isInfinite[r] );
    }
 
    void
-   setRowLhs( int row, REAL lhsval )
+   setRowLhs( int64_t row, REAL lhsval )
    {
       lhs[row] = std::move( lhsval );
    }
@@ -245,12 +245,12 @@ class ProblemBuilder
    setRowLhsAll( Vec<REAL> lhsvals )
    {
       assert( lhsvals.size() == lhs.size() );
-      for( int r = 0; r < lhsvals.size(); ++r )
+      for( int64_t r = 0; r < lhsvals.size(); ++r )
          lhs[r] = std::move( lhsvals[r] );
    }
 
    void
-   setRowRhs( int row, REAL rhsval )
+   setRowRhs( int64_t row, REAL rhsval )
    {
       rhs[row] = std::move( rhsval );
    }
@@ -259,13 +259,13 @@ class ProblemBuilder
    setRowRhsAll( Vec<REAL> rhsvals )
    {
       assert( rhsvals.size() == rhs.size() );
-      for( int r = 0; r < rhsvals.size(); ++r )
+      for( int64_t r = 0; r < rhsvals.size(); ++r )
          rhs[r] = std::move( rhsvals[r] );
    }
 
    /// add a nonzero entry for the given row and column
    void
-   addEntry( int row, int col, const REAL& val )
+   addEntry( int64_t row, int64_t col, const REAL& val )
    {
       assert( val != 0 );
       matrix_buffer.addEntry( row, col, val );
@@ -282,9 +282,9 @@ class ProblemBuilder
    /// add the nonzero entries for the given row
    template <typename R>
    void
-   addRowEntries( int row, int len, const int* cols, const R* vals )
+   addRowEntries( int64_t row, int64_t len, const int64_t* cols, const R* vals )
    {
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
       {
          assert( vals[i] != 0 );
          matrix_buffer.addEntry( row, cols[i], REAL{ vals[i] } );
@@ -293,7 +293,7 @@ class ProblemBuilder
 
    template <typename Str>
    void
-   setRowName( int row, Str&& name )
+   setRowName( int64_t row, Str&& name )
    {
       rownames[row] = String( name );
    }
@@ -303,13 +303,13 @@ class ProblemBuilder
    setRowNameAll( Vec<Str> names )
    {
       assert( rownames.size() == names.size() );
-      for( int r = 0; r < names.size(); ++r )
+      for( int64_t r = 0; r < names.size(); ++r )
          rownames[r] = String( names[r] );
    }
 
    template <typename Str>
    void
-   setColName( int col, Str&& name )
+   setColName( int64_t col, Str&& name )
    {
       colnames[col] = String( name );
    }
@@ -319,7 +319,7 @@ class ProblemBuilder
    setColNameAll( Vec<Str> names )
    {
       assert( colnames.size() == names.size() );
-      for( int c = 0; c < names.size(); ++c )
+      for( int64_t c = 0; c < names.size(); ++c )
          colnames[c] = String( names[c] );
    }
 
@@ -333,9 +333,9 @@ class ProblemBuilder
    /// add the nonzero entries for the given column
    template <typename R>
    void
-   addColEntries( int col, int len, const int* rows, const R* vals )
+   addColEntries( int64_t col, int64_t len, const int64_t* rows, const R* vals )
    {
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
       {
          assert( vals[i] != 0 );
          matrix_buffer.addEntry( rows[i], col, REAL{ vals[i] } );
@@ -347,8 +347,8 @@ class ProblemBuilder
    {
       Problem<REAL> problem;
 
-      int nrows = lhs.size();
-      int ncols = obj.coefficients.size();
+      int64_t nrows = lhs.size();
+      int64_t ncols = obj.coefficients.size();
 
       problem.setName( std::move( probname ) );
 

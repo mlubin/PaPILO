@@ -130,8 +130,8 @@ struct Papilo_Problem
 };
 
 PAPILO_PROBLEM*
-papilo_problem_create( double infinity, const char* name, int nnz_hint,
-                       int row_hint, int col_hint )
+papilo_problem_create( double infinity, const char* name, int64_t nnz_hint,
+                       int64_t row_hint, int64_t col_hint )
 {
    assert( nnz_hint >= 0 );
 
@@ -151,7 +151,7 @@ papilo_problem_create( double infinity, const char* name, int nnz_hint,
 }
 
 int
-papilo_problem_add_cols( PAPILO_PROBLEM* problem, int num, const double* lb,
+papilo_problem_add_cols( PAPILO_PROBLEM* problem, int64_t num, const double* lb,
                          const double* ub, const unsigned char* integral,
                          const double* obj, const char** colnames )
 {
@@ -160,13 +160,13 @@ papilo_problem_add_cols( PAPILO_PROBLEM* problem, int num, const double* lb,
    if( num == 0 )
       return -1;
 
-   int ncols = problem->problemBuilder.getNumCols();
+   int64_t ncols = problem->problemBuilder.getNumCols();
 
    problem->problemBuilder.setNumCols( ncols + num );
 
-   for( int i = 0; i != num; ++i )
+   for( int64_t i = 0; i != num; ++i )
    {
-      int col = ncols + i;
+      int64_t col = ncols + i;
       problem->problemBuilder.setObj( col, obj[i] );
 
       bool isLbInf = lb[i] <= -problem->infinity;
@@ -198,11 +198,11 @@ papilo_problem_add_col( PAPILO_PROBLEM* problem, double lb, double ub,
                         unsigned char integral, double obj,
                         const char* colname )
 {
-   int ncols = problem->problemBuilder.getNumCols();
+   int64_t ncols = problem->problemBuilder.getNumCols();
 
    problem->problemBuilder.setNumCols( ncols + 1 );
 
-   int col = ncols;
+   int64_t col = ncols;
    problem->problemBuilder.setObj( col, obj );
 
    bool isLbInf = lb <= -problem->infinity;
@@ -248,32 +248,32 @@ papilo_problem_get_num_nonzeros( PAPILO_PROBLEM* problem )
 }
 
 void
-papilo_problem_change_col_lb( PAPILO_PROBLEM* problem, int col, double lb )
+papilo_problem_change_col_lb( PAPILO_PROBLEM* problem, int64_t col, double lb )
 {
    problem->problemBuilder.setColLb( col, lb );
 }
 
 void
-papilo_problem_change_col_ub( PAPILO_PROBLEM* problem, int col, double ub )
+papilo_problem_change_col_ub( PAPILO_PROBLEM* problem, int64_t col, double ub )
 {
    problem->problemBuilder.setColUb( col, ub );
 }
 
 void
-papilo_problem_change_col_integral( PAPILO_PROBLEM* problem, int col,
+papilo_problem_change_col_integral( PAPILO_PROBLEM* problem, int64_t col,
                                     unsigned char integral )
 {
    problem->problemBuilder.setColIntegral( col, integral );
 }
 
 void
-papilo_problem_change_col_obj( PAPILO_PROBLEM* problem, int col, double obj )
+papilo_problem_change_col_obj( PAPILO_PROBLEM* problem, int64_t col, double obj )
 {
    problem->problemBuilder.setObj( col, obj );
 }
 
 int
-papilo_problem_add_simple_rows( PAPILO_PROBLEM* problem, int num,
+papilo_problem_add_simple_rows( PAPILO_PROBLEM* problem, int64_t num,
                                 const unsigned char* rowtypes,
                                 const double* side, const char** rownames )
 {
@@ -282,13 +282,13 @@ papilo_problem_add_simple_rows( PAPILO_PROBLEM* problem, int num,
    if( num == 0 )
       return -1;
 
-   int nrows = problem->problemBuilder.getNumRows();
+   int64_t nrows = problem->problemBuilder.getNumRows();
 
    problem->problemBuilder.setNumRows( nrows + num );
 
-   for( int i = 0; i != num; ++i )
+   for( int64_t i = 0; i != num; ++i )
    {
-      int row = nrows + i;
+      int64_t row = nrows + i;
 
       switch( rowtypes[i] )
       {
@@ -320,7 +320,7 @@ papilo_problem_add_simple_rows( PAPILO_PROBLEM* problem, int num,
 }
 
 int
-papilo_problem_add_generic_rows( PAPILO_PROBLEM* problem, int num,
+papilo_problem_add_generic_rows( PAPILO_PROBLEM* problem, int64_t num,
                                  const double* lhs, const double* rhs,
                                  const char** rownames )
 {
@@ -329,13 +329,13 @@ papilo_problem_add_generic_rows( PAPILO_PROBLEM* problem, int num,
    if( num == 0 )
       return -1;
 
-   int nrows = problem->problemBuilder.getNumRows();
+   int64_t nrows = problem->problemBuilder.getNumRows();
 
    problem->problemBuilder.setNumRows( nrows + num );
 
-   for( int i = 0; i != num; ++i )
+   for( int64_t i = 0; i != num; ++i )
    {
-      int row = nrows + i;
+      int64_t row = nrows + i;
 
       bool isLhsInf = lhs[i] <= -problem->infinity;
       bool isRhsInf = rhs[i] >= problem->infinity;
@@ -366,11 +366,11 @@ int
 papilo_problem_add_simple_row( PAPILO_PROBLEM* problem, unsigned char rowtype,
                                double side, const char* rowname )
 {
-   int nrows = problem->problemBuilder.getNumRows();
+   int64_t nrows = problem->problemBuilder.getNumRows();
 
    problem->problemBuilder.setNumRows( nrows + 1 );
 
-   int row = nrows;
+   int64_t row = nrows;
 
    switch( rowtype )
    {
@@ -404,11 +404,11 @@ int
 papilo_problem_add_generic_row( PAPILO_PROBLEM* problem, double lhs, double rhs,
                                 const char* rowname )
 {
-   int nrows = problem->problemBuilder.getNumRows();
+   int64_t nrows = problem->problemBuilder.getNumRows();
 
    problem->problemBuilder.setNumRows( nrows + 1 );
 
-   int row = nrows;
+   int64_t row = nrows;
 
    bool isLhsInf = lhs <= -problem->infinity;
    bool isRhsInf = rhs >= problem->infinity;
@@ -443,41 +443,41 @@ papilo_problem_free( PAPILO_PROBLEM* prob )
 }
 
 void
-papilo_problem_add_nonzero( PAPILO_PROBLEM* problem, int row, int col,
+papilo_problem_add_nonzero( PAPILO_PROBLEM* problem, int64_t row, int64_t col,
                             double val )
 {
    problem->problemBuilder.addEntry( row, col, val );
 }
 
 void
-papilo_problem_add_nonzeros_row( PAPILO_PROBLEM* problem, int row, int num,
-                                 const int* cols, const double* vals )
+papilo_problem_add_nonzeros_row( PAPILO_PROBLEM* problem, int64_t row, int64_t num,
+                                 const int64_t* cols, const double* vals )
 {
    problem->problemBuilder.addRowEntries( row, num, cols, vals );
 }
 
 void
-papilo_problem_add_nonzeros_col( PAPILO_PROBLEM* problem, int col, int num,
-                                 const int* rows, const double* vals )
+papilo_problem_add_nonzeros_col( PAPILO_PROBLEM* problem, int64_t col, int64_t num,
+                                 const int64_t* rows, const double* vals )
 {
    problem->problemBuilder.addColEntries( col, num, rows, vals );
 }
 
 void
-papilo_problem_add_nonzeros_csr( PAPILO_PROBLEM* problem, const int* rowstart,
-                                 const int* cols, const double* vals )
+papilo_problem_add_nonzeros_csr( PAPILO_PROBLEM* problem, const int64_t* rowstart,
+                                 const int64_t* cols, const double* vals )
 {
-   for( int row = 0; row != problem->problemBuilder.getNumRows(); ++row )
+   for( int64_t row = 0; row != problem->problemBuilder.getNumRows(); ++row )
       problem->problemBuilder.addRowEntries(
           row, rowstart[row + 1] - rowstart[row], cols + rowstart[row],
           vals + rowstart[row] );
 }
 
 void
-papilo_problem_add_nonzeros_csc( PAPILO_PROBLEM* problem, const int* colstart,
-                                 const int* rows, const double* vals )
+papilo_problem_add_nonzeros_csc( PAPILO_PROBLEM* problem, const int64_t* colstart,
+                                 const int64_t* rows, const double* vals )
 {
-   for( int col = 0; col != problem->problemBuilder.getNumCols(); ++col )
+   for( int64_t col = 0; col != problem->problemBuilder.getNumCols(); ++col )
       problem->problemBuilder.addColEntries(
           col, colstart[col + 1] - colstart[col], rows + colstart[col],
           vals + colstart[col] );
@@ -737,7 +737,7 @@ papilo_solver_set_param_real( PAPILO_SOLVER* solver, const char* key,
 }
 
 PAPILO_PARAM_RESULT
-papilo_solver_set_param_int( PAPILO_SOLVER* solver, const char* key, int val )
+papilo_solver_set_param_int( PAPILO_SOLVER* solver, const char* key, int64_t val )
 {
    try
    {
@@ -832,7 +832,7 @@ papilo_solver_set_mip_param_real( PAPILO_SOLVER* solver, const char* key,
 
 PAPILO_PARAM_RESULT
 papilo_solver_set_mip_param_int( PAPILO_SOLVER* solver, const char* key,
-                                 int val )
+                                 int64_t val )
 {
    try
    {
@@ -976,7 +976,7 @@ papilo_solver_set_lp_param_real( PAPILO_SOLVER* solver, const char* key,
 
 PAPILO_PARAM_RESULT
 papilo_solver_set_lp_param_int( PAPILO_SOLVER* solver, const char* key,
-                                int val )
+                                int64_t val )
 {
    try
    {
@@ -1119,13 +1119,13 @@ papilo_solver_write_mps( PAPILO_SOLVER* solver, const char* filename )
    assert( solver->state == SolverState::PROBLEM_LOADED );
 
 #ifdef PAPILO_MPS_WRITER
-   Vec<int> rowmapping( solver->problem.getNRows() );
+   Vec<int64_t> rowmapping( solver->problem.getNRows() );
 
-   for( int i = 0; i != solver->problem.getNRows(); ++i )
+   for( int64_t i = 0; i != solver->problem.getNRows(); ++i )
       rowmapping[i] = i;
 
-   Vec<int> colmapping( solver->problem.getNCols() );
-   for( int i = 0; i != solver->problem.getNCols(); ++i )
+   Vec<int64_t> colmapping( solver->problem.getNCols() );
+   for( int64_t i = 0; i != solver->problem.getNCols(); ++i )
       colmapping[i] = i;
 
    MpsWriter<double>::writeProb( filename, solver->problem, rowmapping,

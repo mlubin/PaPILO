@@ -66,14 +66,14 @@ struct RowActivity
 
    /// number of variables that contribute with an infinite obund to the minimal
    /// activity of this row
-   int ninfmin;
+   int64_t ninfmin;
 
    /// number of variables that contribute with an infinite obund to the maximal
    /// activity of this row
-   int ninfmax;
+   int64_t ninfmax;
 
    /// last presolving round where this activity changed
-   int lastchange;
+   int64_t lastchange;
 
    bool
    repropagate( ActivityChange actChange, RowFlags rflags )
@@ -147,7 +147,7 @@ struct RowActivity
 /// counts the locks for the given row entry
 template <typename REAL>
 void
-count_locks( const REAL& val, RowFlags rflags, int& ndownlocks, int& nuplocks )
+count_locks( const REAL& val, RowFlags rflags, int64_t& ndownlocks, int64_t& nuplocks )
 {
    assert( val != 0 );
 
@@ -172,10 +172,10 @@ count_locks( const REAL& val, RowFlags rflags, int& ndownlocks, int& nuplocks )
 /// computes activity of single row from scratch
 template <typename REAL>
 RowActivity<REAL>
-compute_row_activity( const REAL* rowvals, const int* colindices, int rowlen,
+compute_row_activity( const REAL* rowvals, const int64_t* colindices, int64_t rowlen,
                       const Vec<REAL>& lower_bounds,
                       const Vec<REAL>& upper_bounds, const Vec<ColFlags>& flags,
-                      int presolveround = -1 )
+                      int64_t presolveround = -1 )
 {
    RowActivity<REAL> activity;
 
@@ -185,9 +185,9 @@ compute_row_activity( const REAL* rowvals, const int* colindices, int rowlen,
    activity.ninfmax = 0;
    activity.lastchange = presolveround;
 
-   for( int j = 0; j < rowlen; ++j )
+   for( int64_t j = 0; j < rowlen; ++j )
    {
-      int col = colindices[j];
+      int64_t col = colindices[j];
       if( !flags[col].test( ColFlag::kUbUseless ) )
       {
          if( rowvals[j] < 0 )
@@ -315,14 +315,14 @@ update_activity_after_boundchange( const REAL& colval, BoundChange type,
 /// bound of a column
 template <typename REAL>
 void
-update_activities_remove_finite_bound( const int* colinds, const REAL* colvals,
-                                       int collen, BoundChange type,
+update_activities_remove_finite_bound( const int64_t* colinds, const REAL* colvals,
+                                       int64_t collen, BoundChange type,
                                        const REAL& oldbound,
                                        Vec<RowActivity<REAL>>& activities )
 {
    if( type == BoundChange::kLower )
    {
-      for( int i = 0; i != collen; ++i )
+      for( int64_t i = 0; i != collen; ++i )
       {
          const REAL& colval = colvals[i];
          RowActivity<REAL>& activity = activities[colinds[i]];
@@ -341,7 +341,7 @@ update_activities_remove_finite_bound( const int* colinds, const REAL* colvals,
    }
    else
    {
-      for( int i = 0; i != collen; ++i )
+      for( int64_t i = 0; i != collen; ++i )
       {
          const REAL& colval = colvals[i];
          RowActivity<REAL>& activity = activities[colinds[i]];
@@ -366,8 +366,8 @@ update_activities_remove_finite_bound( const int* colinds, const REAL* colvals,
 /// changed
 template <typename REAL, typename ACTIVITYCHANGE>
 void
-update_activities_after_boundchange( const REAL* colvals, const int* colrows,
-                                     int collen, BoundChange type,
+update_activities_after_boundchange( const REAL* colvals, const int64_t* colrows,
+                                     int64_t collen, BoundChange type,
                                      REAL oldbound, REAL newbound,
                                      bool oldbound_inf,
                                      Vec<RowActivity<REAL>>& activities,
@@ -378,7 +378,7 @@ update_activities_after_boundchange( const REAL* colvals, const int* colrows,
            ( type == BoundChange::kLower && newbound != oldbound ) ||
            ( type == BoundChange::kUpper && newbound != oldbound ) );
 
-   for( int i = 0; i < collen; ++i )
+   for( int64_t i = 0; i < collen; ++i )
    {
       RowActivity<REAL>& activity = activities[colrows[i]];
 
@@ -539,7 +539,7 @@ update_activities_after_coeffchange( REAL collb, REAL colub, ColFlags cflags,
 /// and is called to inform about column bounds that changed.
 template <typename REAL, typename BOUNDCHANGE>
 void
-propagate_row( const REAL* rowvals, const int* colindices, int rowlen,
+propagate_row( const REAL* rowvals, const int64_t* colindices, int64_t rowlen,
                const RowActivity<REAL>& activity, REAL lhs, REAL rhs,
                RowFlags rflags, const Vec<REAL>& lower_bounds,
                const Vec<REAL>& upper_bounds, const Vec<ColFlags>& domainFlags,
@@ -555,9 +555,9 @@ propagate_row( const REAL* rowvals, const int* colindices, int rowlen,
 
    if( !rflags.test( RowFlag::kRhsInf ) && activity.ninfmin <= 1 )
    {
-      for( int j = 0; j < rowlen; ++j )
+      for( int64_t j = 0; j < rowlen; ++j )
       {
-         int col = colindices[j];
+         int64_t col = colindices[j];
          REAL lb = lower_bounds[col];
          REAL ub = upper_bounds[col];
          REAL minresact = activity.min;
@@ -606,9 +606,9 @@ propagate_row( const REAL* rowvals, const int* colindices, int rowlen,
 
    if( !rflags.test( RowFlag::kLhsInf ) && activity.ninfmax <= 1 )
    {
-      for( int j = 0; j < rowlen; ++j )
+      for( int64_t j = 0; j < rowlen; ++j )
       {
-         int col = colindices[j];
+         int64_t col = colindices[j];
          REAL lb = lower_bounds[col];
          REAL ub = upper_bounds[col];
          REAL maxresact = activity.max;

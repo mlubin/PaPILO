@@ -618,8 +618,8 @@ rgn()
        "WA3",  "WA4",  "WB1",  "WB2",  "WB3",  "WB4",  "WC1",  "WC2",  "WC3",
        "WC4",  "WD1",  "WD2",  "WD3",  "WD4",  "WE1",  "WE2",  "WE3",  "WE4",
    };
-   int nCols = 180;
-   int nRows = 24;
+   int64_t nCols = 180;
+   int64_t nRows = 24;
    ProblemBuilder<double> pb;
    pb.reserve( 460, 24, 180 );
    pb.setNumRows( nRows );

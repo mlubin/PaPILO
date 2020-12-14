@@ -40,11 +40,11 @@ class SimplifyInequalities : public PresolveMethod<REAL>
    computeGCD( REAL gcd, REAL val, const Num<REAL>& num );
 
    void
-   simplify( const REAL* values, const int* colinds, int rowlen,
+   simplify( const REAL* values, const int64_t* colinds, int64_t rowlen,
              const RowActivity<REAL>& activity, const RowFlags& rflag,
              const Vec<ColFlags>& cflags, const REAL& rhs, const REAL& lhs,
-             const Vec<REAL>& lbs, const Vec<REAL>& ubs, Vec<int>& colOrder,
-             Vec<int>& coeffDelete, REAL& gcd, bool& change,
+             const Vec<REAL>& lbs, const Vec<REAL>& ubs, Vec<int64_t>& colOrder,
+             Vec<int64_t>& coeffDelete, REAL& gcd, bool& change,
              const Num<REAL>& num );
 
  public:
@@ -125,11 +125,11 @@ SimplifyInequalities<REAL>::computeGCD( REAL val1, REAL val2,
 template <typename REAL>
 void
 SimplifyInequalities<REAL>::simplify(
-    const REAL* values, const int* colinds, int rowlen,
+    const REAL* values, const int64_t* colinds, int64_t rowlen,
     const RowActivity<REAL>& activity, const RowFlags& rflag,
     const Vec<ColFlags>& cflags, const REAL& rhs, const REAL& lhs,
-    const Vec<REAL>& lbs, const Vec<REAL>& ubs, Vec<int>& colOrder,
-    Vec<int>& coeffDelete, REAL& gcd, bool& change, const Num<REAL>& num )
+    const Vec<REAL>& lbs, const Vec<REAL>& ubs, Vec<int64_t>& colOrder,
+    Vec<int64_t>& coeffDelete, REAL& gcd, bool& change, const Num<REAL>& num )
 {
    auto maxact = activity.max;
    auto minact = activity.min;
@@ -138,20 +138,20 @@ SimplifyInequalities<REAL>::simplify(
    // absolut coefficient in 'values' (of integer variables)
 
    // order variables
-   for( int i = 0; i != rowlen; ++i )
+   for( int64_t i = 0; i != rowlen; ++i )
    {
       colOrder.push_back( i );
    }
    // continuous variables to the end
-   Vec<int>::iterator start_cont;
+   Vec<int64_t>::iterator start_cont;
    start_cont = partition(
-       colOrder.begin(), colOrder.end(), [&colinds, &cflags]( int const& a ) {
+       colOrder.begin(), colOrder.end(), [&colinds, &cflags]( int64_t const& a ) {
           return cflags[colinds[a]].test( ColFlag::kIntegral );
        } );
    // integer variables after non-increasing absolute value of the
    // coefficients
    pdqsort( colOrder.begin(), start_cont,
-            [&values]( int const& a, int const& b ) {
+            [&values]( int64_t const& a, int64_t const& b ) {
                return abs( values[a] ) > abs( values[b] );
             } );
 
@@ -167,13 +167,13 @@ SimplifyInequalities<REAL>::simplify(
    REAL siderest = 0;
    bool redundant = false;
    // i is index of last non-redundant variable
-   int i = 0;
+   int64_t i = 0;
 
    // iterate over ordered non-zero entries
    for( ; i != rowlen; ++i )
    {
       // index of variable in rowvec
-      int v = colOrder[i];
+      int64_t v = colOrder[i];
 
       // break if variable not integral
       if( !cflags[colinds[v]].test( ColFlag::kIntegral ) )
@@ -226,7 +226,7 @@ SimplifyInequalities<REAL>::simplify(
    {
       change = true;
       // safe indices of redundant variables
-      for( int w = i + 1; w < rowlen; ++w )
+      for( int64_t w = i + 1; w < rowlen; ++w )
       {
          coeffDelete.push_back( colOrder[w] );
       }
@@ -246,23 +246,23 @@ SimplifyInequalities<REAL>::execute( const Problem<REAL>& problem,
    const Vec<ColFlags>& cflags = problem.getColFlags();
    const Vec<REAL>& lhs = consMatrix.getLeftHandSides();
    const Vec<REAL>& rhs = consMatrix.getRightHandSides();
-   const int nrows = consMatrix.getNRows();
+   const int64_t nrows = consMatrix.getNRows();
    const Vec<REAL>& lbs = problem.getLowerBounds();
    const Vec<REAL>& ubs = problem.getUpperBounds();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
    // allocate only once
-   Vec<int> colOrder;
-   Vec<int> coeffDelete;
+   Vec<int64_t> colOrder;
+   Vec<int64_t> coeffDelete;
 
    // iterate over all constraints and try to simplify it
-   for( int row = 0; row != nrows; ++row )
+   for( int64_t row = 0; row != nrows; ++row )
    {
       auto rowvec = consMatrix.getRowCoefficients( row );
-      int rowlen = rowvec.getLength();
+      int64_t rowlen = rowvec.getLength();
       const REAL* values = rowvec.getValues();
-      const int* colinds = rowvec.getIndices();
+      const int64_t* colinds = rowvec.getIndices();
 
       if( rflags[row].test( RowFlag::kRedundant ) )
          continue;
@@ -307,7 +307,7 @@ SimplifyInequalities<REAL>::execute( const Problem<REAL>& problem,
          // TODO other locks needed?
 
          // remove redundant variables
-         for( int col : coeffDelete )
+         for( int64_t col : coeffDelete )
          {
             reductions.changeMatrixEntry( row, colinds[col], 0 );
 

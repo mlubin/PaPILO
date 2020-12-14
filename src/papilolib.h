@@ -50,8 +50,8 @@ extern "C"
    /// determine the finiteness of bounds and rowsides. The name pointer and
    /// the space hints are optional and can be NULL/0.
    PAPILOLIB_EXPORT PAPILO_PROBLEM*
-   papilo_problem_create( double infinity, const char* name, int nnz_hint,
-                          int row_hint, int col_hint );
+   papilo_problem_create( double infinity, const char* name, int64_t nnz_hint,
+                          int64_t row_hint, int64_t col_hint );
 
    /// Free the problem datastructure
    PAPILOLIB_EXPORT void
@@ -61,7 +61,7 @@ extern "C"
    /// new column or -1 if it does not exist (i.e. num == 0).
    /// If colnames is NULL generic names are used.
    PAPILOLIB_EXPORT int
-   papilo_problem_add_cols( PAPILO_PROBLEM* problem, int num, const double* lb,
+   papilo_problem_add_cols( PAPILO_PROBLEM* problem, int64_t num, const double* lb,
                             const double* ub, const unsigned char* integral,
                             const double* obj, const char** colnames );
 
@@ -86,27 +86,27 @@ extern "C"
 
    /// Change columns lower bound
    PAPILOLIB_EXPORT void
-   papilo_problem_change_col_lb( PAPILO_PROBLEM* problem, int col, double lb );
+   papilo_problem_change_col_lb( PAPILO_PROBLEM* problem, int64_t col, double lb );
 
    /// Change columns upper bound
    PAPILOLIB_EXPORT void
-   papilo_problem_change_col_ub( PAPILO_PROBLEM* problem, int col, double ub );
+   papilo_problem_change_col_ub( PAPILO_PROBLEM* problem, int64_t col, double ub );
 
    /// Change columns integrality restrictions
    PAPILOLIB_EXPORT void
-   papilo_problem_change_col_integral( PAPILO_PROBLEM* problem, int col,
+   papilo_problem_change_col_integral( PAPILO_PROBLEM* problem, int64_t col,
                                        unsigned char integral );
 
    /// Change columns objective coefficient
    PAPILOLIB_EXPORT void
-   papilo_problem_change_col_obj( PAPILO_PROBLEM* problem, int col,
+   papilo_problem_change_col_obj( PAPILO_PROBLEM* problem, int64_t col,
                                   double obj );
 
    /// Add simple linear constraints (no ranged rows) to the problem and returns
    /// the index of the first new row or -1 if it does not exist (i.e. num ==
    /// 0). If rownames is NULL generic names are used.
    PAPILOLIB_EXPORT int
-   papilo_problem_add_simple_rows( PAPILO_PROBLEM* problem, int num,
+   papilo_problem_add_simple_rows( PAPILO_PROBLEM* problem, int64_t num,
                                    const unsigned char* rowtypes,
                                    const double* side, const char** rownames );
 
@@ -116,7 +116,7 @@ extern "C"
    /// If rownames is NULL generic names are used. The rows can be a ranged row
    /// if both lhs and rhs are finite.
    PAPILOLIB_EXPORT int
-   papilo_problem_add_generic_rows( PAPILO_PROBLEM* problem, int num,
+   papilo_problem_add_generic_rows( PAPILO_PROBLEM* problem, int64_t num,
                                     const double* lhs, const double* rhs,
                                     const char** rownames );
 
@@ -136,25 +136,25 @@ extern "C"
 
    /// Add a nonzero entry for the given column to the given constraint
    PAPILOLIB_EXPORT void
-   papilo_problem_add_nonzero( PAPILO_PROBLEM* problem, int row, int col,
+   papilo_problem_add_nonzero( PAPILO_PROBLEM* problem, int64_t row, int64_t col,
                                double val );
 
    /// Add the nonzero entries for the given columns to the given row
    PAPILOLIB_EXPORT void
-   papilo_problem_add_nonzeros_row( PAPILO_PROBLEM* problem, int row, int num,
-                                    const int* cols, const double* vals );
+   papilo_problem_add_nonzeros_row( PAPILO_PROBLEM* problem, int64_t row, int64_t num,
+                                    const int64_t* cols, const double* vals );
 
    /// Add the nonzero entries for the given column to the given rows
    PAPILOLIB_EXPORT void
-   papilo_problem_add_nonzeros_col( PAPILO_PROBLEM* problem, int col, int num,
-                                    const int* rows, const double* vals );
+   papilo_problem_add_nonzeros_col( PAPILO_PROBLEM* problem, int64_t col, int64_t num,
+                                    const int64_t* rows, const double* vals );
 
    /// Add the nonzero entries given in compressed sparse row format. The array
    /// rowstart must have size at least nrows + 1 and the arrays cols and vals
    /// must have size at least rowstart[nrows].
    PAPILOLIB_EXPORT void
    papilo_problem_add_nonzeros_csr( PAPILO_PROBLEM* problem,
-                                    const int* rowstart, const int* cols,
+                                    const int64_t* rowstart, const int64_t* cols,
                                     const double* vals );
 
    /// Add the nonzero entries given in compressed sparse column format. The
@@ -162,7 +162,7 @@ extern "C"
    /// vals must have size at least colstart[ncols].
    PAPILOLIB_EXPORT void
    papilo_problem_add_nonzeros_csc( PAPILO_PROBLEM* problem,
-                                    const int* colstart, const int* rows,
+                                    const int64_t* colstart, const int64_t* rows,
                                     const double* vals );
 
    /// Solver type for presolve library
@@ -177,7 +177,7 @@ extern "C"
    /// 1 - errors, 2 - warnings, 3 - info, 4 - extra
    PAPILOLIB_EXPORT void
    papilo_solver_set_trace_callback( PAPILO_SOLVER* solver,
-                                     void ( *thetracecb )( int level,
+                                     void ( *thetracecb )( int64_t level,
                                                            const char* data,
                                                            size_t size,
                                                            void* usrptr ),
@@ -217,7 +217,7 @@ extern "C"
    /// Set integer parameter with given key to the given value
    PAPILOLIB_EXPORT PAPILO_PARAM_RESULT
    papilo_solver_set_param_int( PAPILO_SOLVER* solver, const char* key,
-                                int val );
+                                int64_t val );
 
    /// Set character parameter with given key to the given value
    PAPILOLIB_EXPORT PAPILO_PARAM_RESULT
@@ -237,7 +237,7 @@ extern "C"
    /// Set integer parameter with given key to the given value
    PAPILOLIB_EXPORT PAPILO_PARAM_RESULT
    papilo_solver_set_mip_param_int( PAPILO_SOLVER* solver, const char* key,
-                                    int val );
+                                    int64_t val );
 
    /// Set boolean parameter with given key to the given value
    PAPILOLIB_EXPORT PAPILO_PARAM_RESULT
@@ -267,7 +267,7 @@ extern "C"
    /// Set integer parameter with given key to the given value
    PAPILOLIB_EXPORT PAPILO_PARAM_RESULT
    papilo_solver_set_lp_param_int( PAPILO_SOLVER* solver, const char* key,
-                                   int val );
+                                   int64_t val );
 
    /// Set boolean parameter with given key to the given value
    PAPILOLIB_EXPORT PAPILO_PARAM_RESULT

@@ -27,8 +27,8 @@
 
 TEST_CASE( "papilolib", "[C-API]" )
 {
-   constexpr int num_facilities = 25;
-   constexpr int num_customers = 50;
+   constexpr int64_t num_facilities = 25;
+   constexpr int64_t num_customers = 50;
 
    double facility_fixcost[] = {
        7500.0, 7500.0, 7500.0, 7500.0, 7500.0, 7500.0, 7500.0, 7500.0, 7500.0,
@@ -300,8 +300,8 @@ TEST_CASE( "papilolib", "[C-API]" )
         50787.21250,  41538.43750,  17905.93750, 25093.75000,  187935.86250,
         59235.56250,  16219.87500,  3300.76250,  11949.90000,  9376.72500}};
 
-   constexpr int nvars = num_facilities * num_customers + num_facilities;
-   constexpr int nrows = num_facilities + num_customers;
+   constexpr int64_t nvars = num_facilities * num_customers + num_facilities;
+   constexpr int64_t nrows = num_facilities + num_customers;
 
    unsigned char integral[nvars];
    double lbs[nvars];
@@ -316,17 +316,17 @@ TEST_CASE( "papilolib", "[C-API]" )
    const char* rownames[num_customers + num_facilities];
 
    // all vars binary
-   int nassignvars = nvars - num_facilities;
+   int64_t nassignvars = nvars - num_facilities;
 
-   int i = 0;
+   int64_t i = 0;
    for( ; i != nassignvars; ++i )
    {
       integral[i] = 1;
       lbs[i] = 0;
       ubs[i] = 1;
 
-      int f = i / num_customers;
-      int c = i - num_customers * f;
+      int64_t f = i / num_customers;
+      int64_t c = i - num_customers * f;
       obj[i] = facility_customer_service_cost[f][c];
       names.emplace_back( fmt::format( "x#{}#{}", f + 1, c + 1 ) );
       colnames[i] = names.back().c_str();
@@ -338,7 +338,7 @@ TEST_CASE( "papilolib", "[C-API]" )
       lbs[i] = 0;
       ubs[i] = 1;
 
-      int f = i - nassignvars;
+      int64_t f = i - nassignvars;
       assert( 0 <= f && f < num_facilities );
       obj[i] = facility_fixcost[f];
       names.emplace_back( fmt::format( "y#{}", f + 1 ) );
@@ -373,21 +373,21 @@ TEST_CASE( "papilolib", "[C-API]" )
    for( i = 0; i != num_facilities; ++i )
       assign_nonzeros[i] = 1.0;
 
-   int assign_nonzero_inds[num_facilities];
+   int64_t assign_nonzero_inds[num_facilities];
    for( i = 0; i != num_customers; ++i )
    {
-      for( int j = 0; j != num_facilities; ++j )
+      for( int64_t j = 0; j != num_facilities; ++j )
          assign_nonzero_inds[j] = i + j * num_customers;
 
       papilo_problem_add_nonzeros_row( prob, i, num_facilities,
                                        assign_nonzero_inds, assign_nonzeros );
    }
 
-   int capacity_nonzero_inds[num_customers + 1];
+   int64_t capacity_nonzero_inds[num_customers + 1];
    for( ; i != nrows; ++i )
    {
-      int f = i - num_customers;
-      for( int j = 0; j != num_customers; ++j )
+      int64_t f = i - num_customers;
+      for( int64_t j = 0; j != num_customers; ++j )
          capacity_nonzero_inds[j] = j + f * num_customers;
 
       capacity_nonzero_inds[num_customers] = nassignvars + f;
@@ -455,7 +455,7 @@ TEST_CASE( "papilolib", "[C-API]" )
    REQUIRE( sol != nullptr );
 
    double objval = 0;
-   for( int i = 0; i != nvars; ++i )
+   for( int64_t i = 0; i != nvars; ++i )
       objval += obj[i] * sol[i];
    REQUIRE( objval == Approx( 796648.4375 ) );
 

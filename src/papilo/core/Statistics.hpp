@@ -30,18 +30,18 @@ namespace papilo
 struct Statistics
 {
    double presolvetime;
-   int ntsxapplied;
-   int ntsxconflicts;
-   int nboundchgs;
-   int nsidechgs;
-   int ncoefchgs;
-   int nrounds;
-   int ndeletedcols;
-   int ndeletedrows;
+   int64_t ntsxapplied;
+   int64_t ntsxconflicts;
+   int64_t nboundchgs;
+   int64_t nsidechgs;
+   int64_t ncoefchgs;
+   int64_t nrounds;
+   int64_t ndeletedcols;
+   int64_t ndeletedrows;
 
-   Statistics( double presolvetime, int ntsxapplied, int ntsxconflicts,
-               int nboundchgs, int nsidechgs, int ncoefchgs, int nrounds,
-               int ndeletedcols, int ndeletedrows )
+   Statistics( double presolvetime, int64_t ntsxapplied, int64_t ntsxconflicts,
+               int64_t nboundchgs, int64_t nsidechgs, int64_t ncoefchgs, int64_t nrounds,
+               int64_t ndeletedcols, int64_t ndeletedrows )
        : presolvetime( presolvetime ), ntsxapplied( ntsxapplied ),
          ntsxconflicts( ntsxconflicts ), nboundchgs( nboundchgs ),
          nsidechgs( nsidechgs ), ncoefchgs( ncoefchgs ), nrounds( nrounds ),

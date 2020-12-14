@@ -61,13 +61,13 @@ class Array
    }
 
    T&
-   operator[]( int i )
+   operator[]( int64_t i )
    {
       return ptr[i];
    }
 
    const T&
-   operator[]( int i ) const
+   operator[]( int64_t i ) const
    {
       return ptr[i];
    }

@@ -37,10 +37,10 @@ template <typename REAL>
 struct ProbingBoundChg
 {
    REAL bound;
-   unsigned int col : 31;
+   int64_t col : 31;
    unsigned int upper : 1;
 
-   ProbingBoundChg( bool upper, int col, REAL bound )
+   ProbingBoundChg( bool upper, int64_t col, REAL bound )
    {
       this->upper = upper ? 1 : 0;
       this->col = static_cast<unsigned int>( col );
@@ -53,10 +53,10 @@ struct ProbingSubstitution
 {
    REAL col2scale;
    REAL col2const;
-   int col1;
-   int col2;
+   int64_t col1;
+   int64_t col2;
 
-   ProbingSubstitution( int col1, REAL col2scale, int col2, REAL col2const )
+   ProbingSubstitution( int64_t col1, REAL col2scale, int64_t col2, REAL col2const )
        : col2scale( col2scale ), col2const( col2const ), col1( col1 ),
          col2( col2 )
    {
@@ -85,7 +85,7 @@ class ProbingView
    reset();
 
    void
-   setProbingColumn( int col, bool value )
+   setProbingColumn( int64_t col, bool value )
    {
       // remember probing column and probed value
       probingCol = col;
@@ -99,13 +99,13 @@ class ProbingView
    }
 
    void
-   activityChanged( ActivityChange actchange, int rowid,
+   activityChanged( ActivityChange actchange, int64_t rowid,
                     RowActivity<REAL>& activity );
    void
-   changeLb( int col, REAL newlb );
+   changeLb( int64_t col, REAL newlb );
 
    void
-   changeUb( int col, REAL newub );
+   changeUb( int64_t col, REAL newub );
 
    void
    storeImplications();
@@ -192,20 +192,20 @@ class ProbingView
    REAL mincontdomred;
 
    // datastructures used for probing
-   Vec<int> changed_lbs;
-   Vec<int> changed_ubs;
-   Vec<int> changed_activities;
+   Vec<int64_t> changed_lbs;
+   Vec<int64_t> changed_ubs;
+   Vec<int64_t> changed_activities;
    Vec<REAL> probing_lower_bounds;
    Vec<REAL> probing_upper_bounds;
    Vec<ColFlags> probing_domain_flags;
    Vec<RowActivity<REAL>> probing_activities;
 
-   Vec<int> prop_activities;
-   Vec<int> next_prop_activities;
+   Vec<int64_t> prop_activities;
+   Vec<int64_t> next_prop_activities;
 
    bool infeasible;
-   int round;
-   int probingCol;
+   int64_t round;
+   int64_t probingCol;
    bool probingValue;
 
    // datastructures for storing result of probing on one value
@@ -248,14 +248,14 @@ template <typename REAL>
 void
 ProbingView<REAL>::reset()
 {
-   const Vec<int>& rowsize = problem.getConstraintMatrix().getRowSizes();
+   const Vec<int64_t>& rowsize = problem.getConstraintMatrix().getRowSizes();
 
    const auto& orig_lbs = problem.getLowerBounds();
-   for( int i : changed_lbs )
+   for( int64_t i : changed_lbs )
    {
       if( i < 0 )
       {
-         int c = -i - 1;
+         int64_t c = -i - 1;
          assert( !probing_domain_flags[c].test( ColFlag::kLbUseless ) &&
                  problem.getColFlags()[c].test( ColFlag::kLbUseless ) );
          probing_domain_flags[c].set( ColFlag::kLbUseless );
@@ -269,11 +269,11 @@ ProbingView<REAL>::reset()
    changed_lbs.clear();
 
    const auto& orig_ubs = problem.getUpperBounds();
-   for( int i : changed_ubs )
+   for( int64_t i : changed_ubs )
    {
       if( i < 0 )
       {
-         int c = -i - 1;
+         int64_t c = -i - 1;
          assert( !probing_domain_flags[c].test( ColFlag::kUbUseless ) &&
                  problem.getColFlags()[c].test( ColFlag::kUbUseless ) );
          probing_domain_flags[c].set( ColFlag::kUbUseless );
@@ -287,7 +287,7 @@ ProbingView<REAL>::reset()
    changed_ubs.clear();
 
    const auto& orig_activities = problem.getRowActivities();
-   for( int i : changed_activities )
+   for( int64_t i : changed_activities )
    {
       amountofwork += rowsize[i];
       probing_activities[i] = orig_activities[i];
@@ -317,7 +317,7 @@ ProbingView<REAL>::reset()
 
 template <typename REAL>
 void
-ProbingView<REAL>::activityChanged( ActivityChange actchange, int rowid,
+ProbingView<REAL>::activityChanged( ActivityChange actchange, int64_t rowid,
                                     RowActivity<REAL>& activity )
 {
    const auto& consMatrix = problem.getConstraintMatrix();
@@ -397,7 +397,7 @@ ProbingView<REAL>::activityChanged( ActivityChange actchange, int rowid,
 
 template <typename REAL>
 void
-ProbingView<REAL>::changeLb( int col, REAL newlb )
+ProbingView<REAL>::changeLb( int64_t col, REAL newlb )
 {
    const auto& consMatrix = problem.getConstraintMatrix();
    auto colvec = consMatrix.getColumnCoefficients( col );
@@ -430,7 +430,7 @@ ProbingView<REAL>::changeLb( int col, REAL newlb )
    update_activities_after_boundchange(
        colvec.getValues(), colvec.getIndices(), colvec.getLength(),
        BoundChange::kLower, oldlb, newlb, lbinf, probing_activities,
-       [this]( ActivityChange actChange, int rowid,
+       [this]( ActivityChange actChange, int64_t rowid,
                RowActivity<REAL>& activity ) {
           activityChanged( actChange, rowid, activity );
        },
@@ -439,7 +439,7 @@ ProbingView<REAL>::changeLb( int col, REAL newlb )
 
 template <typename REAL>
 void
-ProbingView<REAL>::changeUb( int col, REAL newub )
+ProbingView<REAL>::changeUb( int64_t col, REAL newub )
 {
    const auto& consMatrix = problem.getConstraintMatrix();
    auto colvec = consMatrix.getColumnCoefficients( col );
@@ -472,7 +472,7 @@ ProbingView<REAL>::changeUb( int col, REAL newub )
    update_activities_after_boundchange(
        colvec.getValues(), colvec.getIndices(), colvec.getLength(),
        BoundChange::kUpper, oldub, newub, ubinf, probing_activities,
-       [this]( ActivityChange actChange, int rowid,
+       [this]( ActivityChange actChange, int64_t rowid,
                RowActivity<REAL>& activity ) {
           activityChanged( actChange, rowid, activity );
        },
@@ -492,9 +492,9 @@ ProbingView<REAL>::storeImplications()
    otherValueImplications.reserve( changed_lbs.size() + changed_ubs.size() -
                                    1 );
 
-   for( int c : changed_lbs )
+   for( int64_t c : changed_lbs )
    {
-      int col = c < 0 ? -c - 1 : c;
+      int64_t col = c < 0 ? -c - 1 : c;
 
       if( col == probingCol )
          continue;
@@ -503,9 +503,9 @@ ProbingView<REAL>::storeImplications()
           ProbingBoundChg<REAL>( false, col, probing_lower_bounds[col] ) );
    }
 
-   for( int c : changed_ubs )
+   for( int64_t c : changed_ubs )
    {
-      int col = c < 0 ? -c - 1 : c;
+      int64_t col = c < 0 ? -c - 1 : c;
 
       if( col == probingCol )
          continue;
@@ -536,9 +536,9 @@ ProbingView<REAL>::analyzeImplications()
       boundChanges.reserve( boundChanges.size() + changed_lbs.size() +
                             changed_ubs.size() );
 
-      for( int c : changed_lbs )
+      for( int64_t c : changed_lbs )
       {
-         int col = c < 0 ? -c - 1 : c;
+         int64_t col = c < 0 ? -c - 1 : c;
 
          assert( c >= 0 ||
                  ( !probing_domain_flags[col].test( ColFlag::kLbUseless ) &&
@@ -552,9 +552,9 @@ ProbingView<REAL>::analyzeImplications()
              ProbingBoundChg<REAL>( false, col, probing_lower_bounds[col] ) );
       }
 
-      for( int c : changed_ubs )
+      for( int64_t c : changed_ubs )
       {
-         int col = c < 0 ? -c - 1 : c;
+         int64_t col = c < 0 ? -c - 1 : c;
 
          assert( c >= 0 ||
                  ( !probing_domain_flags[col].test( ColFlag::kUbUseless ) &&
@@ -634,8 +634,8 @@ ProbingView<REAL>::analyzeImplications()
             onefixval = boundChg.bound;
          }
 
-         int col1 = boundChg.col;
-         int col2 = probingCol;
+         int64_t col1 = boundChg.col;
+         int64_t col2 = probingCol;
          REAL scale = onefixval - zerofixval;
 
          // in case both columns are binary, we keep the one whith the
@@ -689,7 +689,7 @@ ProbingView<REAL>::propagateDomains()
    const auto& rhs = consMatrix.getRightHandSides();
    const auto& rflags = consMatrix.getRowFlags();
 
-   int nchgs = 0;
+   int64_t nchgs = 0;
 
    using std::swap;
 
@@ -698,13 +698,13 @@ ProbingView<REAL>::propagateDomains()
 
    while( !prop_activities.empty() )
    {
-      int curr_round = round--;
+      int64_t curr_round = round--;
 
       Message::debug( this,
                       "starting probing propagation round {} on {} rows\n",
                       -curr_round - 2, prop_activities.size() );
 
-      for( int candrow : prop_activities )
+      for( int64_t candrow : prop_activities )
       {
          bool propagate = false;
 
@@ -726,7 +726,7 @@ ProbingView<REAL>::propagateDomains()
              probing_activities[candrow], lhs[candrow], rhs[candrow],
              rflags[candrow], probing_lower_bounds, probing_upper_bounds,
              probing_domain_flags,
-             [this, &nchgs]( BoundChange bndChg, int colid, REAL newbound ) {
+             [this, &nchgs]( BoundChange bndChg, int64_t colid, REAL newbound ) {
                 if( num.isHugeVal( newbound ) )
                    return;
 

@@ -71,15 +71,15 @@ class DependentRows
    }
 
    void
-   addRow( int rowIndex, SparseVectorView<REAL> rowValues, REAL side )
+   addRow( int64_t rowIndex, SparseVectorView<REAL> rowValues, REAL side )
    {
-      int len = rowValues.getLength();
-      const int* inds = rowValues.getIndices();
+      int64_t len = rowValues.getLength();
+      const int64_t* inds = rowValues.getIndices();
       const REAL* vals = rowValues.getValues();
 
       mat.startBadge();
 
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
          mat.addBadgeEntry( rowIndex, inds[i], vals[i] );
 
       if( side != 0 )
@@ -90,15 +90,15 @@ class DependentRows
 
    struct PivotCandidate
    {
-      int idx;
-      int colsize;
-      int rowsize;
+      int64_t idx;
+      int64_t colsize;
+      int64_t rowsize;
 
       bool
       operator<( const PivotCandidate& other ) const
       {
-         int trivial = colsize == 1 || rowsize == 1;
-         int othertrivial = other.colsize == 1 || other.rowsize == 1;
+         int64_t trivial = colsize == 1 || rowsize == 1;
+         int64_t othertrivial = other.colsize == 1 || other.rowsize == 1;
 
          return std::make_tuple( trivial, colsize, rowsize ) >
                 std::make_tuple( othertrivial, other.colsize, other.rowsize );
@@ -144,7 +144,7 @@ class DependentRows
          Vec<double> colmax( ncols );
          Vec<double> colmin( ncols );
 
-         for( int i = 0; i < A.size(); ++i )
+         for( int64_t i = 0; i < A.size(); ++i )
          {
             double absai = abs( A[i] );
             rowmax[indc[i] - 1] = std::max( rowmax[indc[i] - 1], absai );
@@ -157,47 +157,47 @@ class DependentRows
          }
 
          double maxrowratio = 1;
-         for( int i = 0; i < rowmax.size(); ++i )
+         for( int64_t i = 0; i < rowmax.size(); ++i )
             maxrowratio = std::max( maxrowratio, rowmax[i] / rowmin[i] );
 
          double maxcolratio = 1;
-         for( int i = 0; i < colmax.size(); ++i )
+         for( int64_t i = 0; i < colmax.size(); ++i )
             maxcolratio = std::max( maxcolratio, colmax[i] / colmin[i] );
 
          if( maxrowratio < maxcolratio )
          {
-            for( int i = 0; i < A.size(); ++i )
+            for( int64_t i = 0; i < A.size(); ++i )
                A[i] = ( A[i] / rowmax[indc[i] - 1] );
 
-            for( int i = 0; i < colmax.size(); ++i )
+            for( int64_t i = 0; i < colmax.size(); ++i )
                colmax[i] = 0;
 
-            for( int i = 0; i < A.size(); ++i )
+            for( int64_t i = 0; i < A.size(); ++i )
                colmax[indr[i] - 1] =
                    std::max( colmax[indr[i] - 1], abs( A[i] ) );
 
-            for( int i = 0; i < A.size(); ++i )
+            for( int64_t i = 0; i < A.size(); ++i )
                A[i] = ( A[i] / colmax[indr[i] - 1] );
          }
          else
          {
-            for( int i = 0; i < A.size(); ++i )
+            for( int64_t i = 0; i < A.size(); ++i )
                A[i] = ( A[i] / colmax[indr[i] - 1] );
 
-            for( int i = 0; i < rowmax.size(); ++i )
+            for( int64_t i = 0; i < rowmax.size(); ++i )
                rowmax[i] = 0;
 
-            for( int i = 0; i < A.size(); ++i )
+            for( int64_t i = 0; i < A.size(); ++i )
                rowmax[indc[i] - 1] =
                    std::max( rowmax[indc[i] - 1], abs( A[i] ) );
 
-            for( int i = 0; i < A.size(); ++i )
+            for( int64_t i = 0; i < A.size(); ++i )
                A[i] = ( A[i] / rowmax[indc[i] - 1] );
          }
       }
 
       void
-      computeDependentColumns( Vec<int>& colmapping )
+      computeDependentColumns( Vec<int64_t>& colmapping )
       {
 #ifdef PAPILO_HAVE_LUSOL
          // is passed in : int64_t nelem;
@@ -249,7 +249,7 @@ class DependentRows
 
          if( ( inform == 0 || inform == 1 ) && luparm[10] > 0 )
          {
-            for( int i = 0; i < ncols; ++i )
+            for( int64_t i = 0; i < ncols; ++i )
             {
                if( w[i] > 0 )
                   colmapping[i] = -1;
@@ -270,15 +270,15 @@ class DependentRows
 
    int64_t
    preprocessLUFac( const Message& msg, const Num<REAL>& num,
-                    LUSOL_Input& lusolInput, Vec<int>& rowmapping )
+                    LUSOL_Input& lusolInput, Vec<int64_t>& rowmapping )
    {
       SmallVec<int, 32> stack;
       SmallVec<int, 32> stack2;
 
-      Vec<int> rowsize( nrows );
-      Vec<int> colsize( ncols );
+      Vec<int64_t> rowsize( nrows );
+      Vec<int64_t> colsize( ncols );
 
-      for( int i = 1; i != mat.entries.size(); ++i )
+      for( int64_t i = 1; i != mat.entries.size(); ++i )
       {
          assert( mat.entries[i].row < nrows );
          assert( mat.entries[i].col < ncols );
@@ -288,17 +288,17 @@ class DependentRows
       }
 
 #ifndef NDEBUG
-      for( int i = 0; i != colsize.size(); ++i )
+      for( int64_t i = 0; i != colsize.size(); ++i )
       {
-         int tmpcolsize = 0;
+         int64_t tmpcolsize = 0;
          for( auto coliter = mat.template beginStart<false>( stack, -1, i );
               coliter->col == i; coliter = mat.template next<false>( stack ) )
             ++tmpcolsize;
          assert( tmpcolsize == colsize[i] );
       }
-      for( int i = 0; i != rowsize.size(); ++i )
+      for( int64_t i = 0; i != rowsize.size(); ++i )
       {
-         int tmprowsize = 0;
+         int64_t tmprowsize = 0;
          for( auto rowiter = mat.template beginStart<true>( stack, i, -1 );
               rowiter->row == i; rowiter = mat.template next<true>( stack ) )
             ++tmprowsize;
@@ -312,14 +312,14 @@ class DependentRows
 
       heap.reserve( 2 * mat.getNnz() );
 
-      for( int i = 1; i != mat.entries.size(); ++i )
+      for( int64_t i = 1; i != mat.entries.size(); ++i )
       {
          PivotCandidate p{ i, colsize[mat.entries[i].col],
                            rowsize[mat.entries[i].row] };
          heap.push( p );
       }
 
-      int nremoved = 0;
+      int64_t nremoved = 0;
       REAL minpivot = num.getFeasTol() * 1e4;
 
       while( !heap.empty() )
@@ -364,8 +364,8 @@ class DependentRows
 
          nremoved++;
 
-         int col = pivotentry->col;
-         int pivotrow = pivotentry->row;
+         int64_t col = pivotentry->col;
+         int64_t pivotrow = pivotentry->row;
          REAL pivotrowscale = -1.0 / pivotentry->val;
 
          if( !trivialpivot )
@@ -416,7 +416,7 @@ class DependentRows
                      {
                         const_cast<MatrixEntry<REAL>*>( rowentry )->val =
                             newval;
-                        int rowentryidx = ( rowentry - &mat.entries[0] );
+                        int64_t rowentryidx = ( rowentry - &mat.entries[0] );
                         assert( rowentryidx > 0 &&
                                 rowentryidx < mat.entries.size() &&
                                 rowentry == &mat.entries[rowentryidx] );
@@ -429,12 +429,12 @@ class DependentRows
                   {
                      ++colsize[rowiter->col];
                      ++rowsize[coliter->row];
-                     int rowentryidx = int( mat.entries.size() );
+                     int64_t rowentryidx = int( mat.entries.size() );
                      heap.push( PivotCandidate{ rowentryidx,
                                                 colsize[rowiter->col],
                                                 rowsize[coliter->row] } );
-                     int tmpcoliteridx = ( coliter - &mat.entries[0] );
-                     int tmprowiteridx = ( rowiter - &mat.entries[0] );
+                     int64_t tmpcoliteridx = ( coliter - &mat.entries[0] );
+                     int64_t tmprowiteridx = ( rowiter - &mat.entries[0] );
                      mat.addEntry( coliter->row, rowiter->col, delta );
                      coliter = &mat.entries[tmpcoliteridx];
                      rowiter = &mat.entries[tmprowiteridx];
@@ -477,7 +477,7 @@ class DependentRows
 
       int64_t remainingnnz = 0;
 
-      for( int i = 0; i < rowsize.size(); ++i )
+      for( int64_t i = 0; i < rowsize.size(); ++i )
       {
          if( rowsize[i] != -1 )
          {
@@ -495,7 +495,7 @@ class DependentRows
 
       nrows = rowmapping.size();
       ncols = 0;
-      for( int i = 0; i < colsize.size(); ++i )
+      for( int64_t i = 0; i < colsize.size(); ++i )
       {
          if( colsize[i] != -1 )
          {
@@ -507,7 +507,7 @@ class DependentRows
       // add data to lusol transposed
       lusolInput.setSize( ncols, nrows, remainingnnz );
 
-      for( int i = 1; i != mat.entries.size(); ++i )
+      for( int64_t i = 1; i != mat.entries.size(); ++i )
       {
          if( mat.entries[i].val == 0 )
             continue;
@@ -522,10 +522,10 @@ class DependentRows
       return remainingnnz;
    }
 
-   Vec<int>
+   Vec<int64_t>
    getDependentRows( const Message& msg, const Num<REAL>& num )
    {
-      Vec<int> rowmapping;
+      Vec<int64_t> rowmapping;
       LUSOL_Input lusolInput;
 
       if( !DependentRows<REAL>::Enabled )

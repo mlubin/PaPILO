@@ -85,9 +85,9 @@ SimpleSubstitution<REAL>::execute( const Problem<REAL>& problem,
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
-   for( int k = 0; k < nrows; ++k )
+   for( int64_t k = 0; k < nrows; ++k )
    {
-      int i = rowperm[k];
+      int64_t i = rowperm[k];
       // check that equality flag is correct or row is redundant
       assert( rflags[i].test( RowFlag::kRedundant ) ||
               ( !rflags[i].test( RowFlag::kEquation ) &&
@@ -105,11 +105,11 @@ SimpleSubstitution<REAL>::execute( const Problem<REAL>& problem,
       auto rowvec = constMatrix.getRowCoefficients( i );
       assert( rowvec.getLength() == 2 );
       const REAL* vals = rowvec.getValues();
-      const int* inds = rowvec.getIndices();
+      const int64_t* inds = rowvec.getIndices();
       REAL rhs = rhs_values[i];
 
-      int subst;
-      int stay;
+      int64_t subst;
+      int64_t stay;
 
       if( cflags[inds[0]].test( ColFlag::kIntegral ) !=
           cflags[inds[1]].test( ColFlag::kIntegral ) )

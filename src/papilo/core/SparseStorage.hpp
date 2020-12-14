@@ -38,7 +38,7 @@ namespace papilo
 
 /// type definition for a non-zero entry in triplet format
 template <typename REAL>
-using Triplet = std::tuple<int, int, REAL>;
+using Triplet = std::tuple<int64_t, int64_t, REAL>;
 
 // forward declaration of constraint matrix to declare the constraint matrix a
 // friend class of SparseStorage
@@ -47,8 +47,8 @@ class ConstraintMatrix;
 
 struct IndexRange
 {
-   int start;
-   int end;
+   int64_t start;
+   int64_t end;
 
    IndexRange() : start( -1 ), end( -1 ){};
 
@@ -71,55 +71,55 @@ class SparseStorage
 
  public:
    static constexpr double DEFAULT_SPARE_RATIO = 2.0;
-   static constexpr int DEFAULT_MIN_INTER_ROW_SPACE = 4;
+   static constexpr int64_t DEFAULT_MIN_INTER_ROW_SPACE = 4;
 
    SparseStorage() = default;
-   SparseStorage( Vec<Triplet<REAL>> entries, int nRows_in, int nCols_in,
+   SparseStorage( Vec<Triplet<REAL>> entries, int64_t nRows_in, int64_t nCols_in,
                   bool sorted = false, double spareRatio = DEFAULT_SPARE_RATIO,
-                  int minInterRowSpace = DEFAULT_MIN_INTER_ROW_SPACE );
-   SparseStorage( REAL* values_in, int* rowstart_in, int* columns_in,
-                  int nRows_in, int nCols_in, int nnz_in,
+                  int64_t minInterRowSpace = DEFAULT_MIN_INTER_ROW_SPACE );
+   SparseStorage( REAL* values_in, int64_t* rowstart_in, int64_t* columns_in,
+                  int64_t nRows_in, int64_t nCols_in, int64_t nnz_in,
                   double spareRatio = DEFAULT_SPARE_RATIO,
-                  int minInterRowSpace = DEFAULT_MIN_INTER_ROW_SPACE );
-   SparseStorage( int nRows_in, int nCols_in, int nnz_in, double spareRatio,
-                  int minInterRowSpace );
+                  int64_t minInterRowSpace = DEFAULT_MIN_INTER_ROW_SPACE );
+   SparseStorage( int64_t nRows_in, int64_t nCols_in, int64_t nnz_in, double spareRatio,
+                  int64_t minInterRowSpace );
 
    SparseStorage<REAL>
    getTranspose() const;
 
-   Vec<int>
-   compress( const Vec<int>& rowsize, const Vec<int>& colsize,
+   Vec<int64_t>
+   compress( const Vec<int64_t>& rowsize, const Vec<int64_t>& colsize,
              bool full = false );
 
-   int
+   int64_t
    getNRows() const
    {
       return nRows;
    }
 
    bool
-   shiftRows( const int* rowinds, int ninds, int maxshiftperrow,
-              const Vec<int>& requiredSpareSpace );
+   shiftRows( const int64_t* rowinds, int64_t ninds, int64_t maxshiftperrow,
+              const Vec<int64_t>& requiredSpareSpace );
 
-   int
+   int64_t
    getNCols() const
    {
       return nCols;
    }
 
-   int
+   int64_t
    getNnz() const
    {
       return nnz;
    }
 
-   int&
+   int64_t&
    getNnz()
    {
       return nnz;
    }
 
-   int
+   int64_t
    getNAlloc() const
    {
       return nAlloc;
@@ -161,25 +161,25 @@ class SparseStorage
       return rowranges.data();
    }
 
-   const int*
+   const int64_t*
    getColumns() const
    {
       return columns.data();
    }
 
-   int*
+   int64_t*
    getColumns()
    {
       return columns.data();
    }
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getColumnsVec() const
    {
       return columns;
    }
 
-   Vec<int>
+   Vec<int64_t>
    getRowStarts() const;
 
    // function to change existing coefficients in row. Must not be called with
@@ -187,15 +187,15 @@ class SparseStorage
    // sorted order.
    template <typename HasNext, typename GetNext, typename CoeffChanged>
    int
-   changeRowInplace( int row, HasNext&& hasNext, GetNext&& getNext,
+   changeRowInplace( int64_t row, HasNext&& hasNext, GetNext&& getNext,
                      CoeffChanged&& coeffChanged )
    {
-      int i = rowranges[row].start;
-      int j = 0;
+      int64_t i = rowranges[row].start;
+      int64_t j = 0;
 
       while( hasNext() )
       {
-         int col;
+         int64_t col;
          REAL newval;
 
          std::tie( col, newval ) = getNext();
@@ -260,9 +260,9 @@ class SparseStorage
    template <typename Iter, typename GetCol, typename GetVal,
              typename MergeVals, typename CoeffChanged>
    int
-   changeRow( int row, Iter it, Iter itend, GetCol&& getCol, GetVal&& getVal,
+   changeRow( int64_t row, Iter it, Iter itend, GetCol&& getCol, GetVal&& getVal,
               MergeVals&& mergeVals, CoeffChanged&& coeffChanged,
-              Vec<REAL>& valbuffer, Vec<int>& indbuffer )
+              Vec<REAL>& valbuffer, Vec<int64_t>& indbuffer )
    {
       auto rowmaxlen =
           rowranges[row].end - rowranges[row].start + ( itend - it );
@@ -272,11 +272,11 @@ class SparseStorage
       valbuffer.reserve( rowmaxlen );
       indbuffer.reserve( rowmaxlen );
 
-      int i = rowranges[row].start;
+      int64_t i = rowranges[row].start;
 
       while( i != rowranges[row].end && it != itend )
       {
-         int col = getCol( it );
+         int64_t col = getCol( it );
 
          if( columns[i] == col )
          {
@@ -319,7 +319,7 @@ class SparseStorage
       {
          while( it != itend )
          {
-            int col = getCol( it );
+            int64_t col = getCol( it );
             REAL newval = getVal( it );
             coeffChanged( row, col, 0.0, newval );
 
@@ -333,7 +333,7 @@ class SparseStorage
       assert( valbuffer.size() == indbuffer.size() );
       assert( std::is_sorted( indbuffer.begin(), indbuffer.end() ) );
 
-      int newsize = static_cast<int>( indbuffer.size() );
+      int64_t newsize = static_cast<int>( indbuffer.size() );
 
       assert( newsize <= rowranges[row + 1].start - rowranges[row].start );
 
@@ -342,7 +342,7 @@ class SparseStorage
       // copy over values from buffer
       std::copy_n( valbuffer.data(), newsize, &values[rowranges[row].start] );
       std::memcpy( &columns[rowranges[row].start], indbuffer.data(),
-                   sizeof( int ) * newsize );
+                   sizeof( int64_t ) * newsize );
 
       rowranges[row].end = rowranges[row].start + newsize;
 
@@ -374,12 +374,12 @@ class SparseStorage
          columns.resize( nAlloc );
       }
 
-      for( int i = 0; i != nRows + 1; ++i )
+      for( int64_t i = 0; i != nRows + 1; ++i )
          ar& rowranges[i];
 
-      for( int i = 0; i != nRows; ++i )
+      for( int64_t i = 0; i != nRows; ++i )
       {
-         for( int j = rowranges[i].start; j != rowranges[i].end; ++j )
+         for( int64_t j = rowranges[i].start; j != rowranges[i].end; ++j )
          {
             ar& values[j];
             ar& columns[j];
@@ -388,28 +388,28 @@ class SparseStorage
    }
 
    int
-   computeRowAlloc( int rowsize ) const
+   computeRowAlloc( int64_t rowsize ) const
    {
       return static_cast<int>( rowsize * spareRatio ) + minInterRowSpace;
    }
 
  private:
-   int
+   int64_t
    computeNAlloc() const
    {
-      return static_cast<int>( nnz * spareRatio ) + nRows * minInterRowSpace;
+      return static_cast<int64_t>( nnz * spareRatio ) + nRows * minInterRowSpace;
    }
 
    Vec<REAL> values;
    Vec<IndexRange> rowranges;
-   Vec<int> columns;
+   Vec<int64_t> columns;
 
-   int nRows = -1;
-   int nCols = -1;
-   int nnz = -1;
-   int nAlloc = -1;
+   int64_t nRows = -1;
+   int64_t nCols = -1;
+   int64_t nnz = -1;
+   int64_t nAlloc = -1;
    double spareRatio = 0.0;
-   int minInterRowSpace = 0;
+   int64_t minInterRowSpace = 0;
 };
 
 #ifdef PAPILO_USE_EXTERN_TEMPLATES
@@ -419,9 +419,9 @@ extern template class SparseStorage<Rational>;
 #endif
 
 template <typename REAL>
-SparseStorage<REAL>::SparseStorage( Vec<Triplet<REAL>> entries, int nRows_in,
-                                    int nCols_in, bool sorted,
-                                    double spareRatio, int minInterRowSpace )
+SparseStorage<REAL>::SparseStorage( Vec<Triplet<REAL>> entries, int64_t nRows_in,
+                                    int64_t nCols_in, bool sorted,
+                                    double spareRatio, int64_t minInterRowSpace )
     : nRows( nRows_in ), nCols( nCols_in ), spareRatio( spareRatio ),
       minInterRowSpace( minInterRowSpace )
 {
@@ -440,12 +440,12 @@ SparseStorage<REAL>::SparseStorage( Vec<Triplet<REAL>> entries, int nRows_in,
 
    rowranges[0].start = 0;
 
-   int idx = 0;
-   int current_row = 0;
+   int64_t idx = 0;
+   int64_t current_row = 0;
    for( auto entry : entries )
    {
-      int row;
-      int col;
+      int64_t row;
+      int64_t col;
       REAL value;
 
       std::tie( row, col, value ) = entry;
@@ -467,7 +467,7 @@ SparseStorage<REAL>::SparseStorage( Vec<Triplet<REAL>> entries, int nRows_in,
          rowranges[current_row + 1].start = idx;
 
          // there might be empty rows
-         for( int r = current_row + 1; r < row; r++ )
+         for( int64_t r = current_row + 1; r < row; r++ )
          {
             rowranges[r].end = idx;
             rowranges[r + 1].start = idx;
@@ -498,7 +498,7 @@ SparseStorage<REAL>::SparseStorage( Vec<Triplet<REAL>> entries, int nRows_in,
    rowranges[current_row + 1].start = idx;
 
    // there might be empty rows at the end
-   for( int r = current_row + 1; r < nRows; r++ )
+   for( int64_t r = current_row + 1; r < nRows; r++ )
    {
       rowranges[r].end = idx;
       rowranges[r + 1].start = idx;
@@ -508,8 +508,8 @@ SparseStorage<REAL>::SparseStorage( Vec<Triplet<REAL>> entries, int nRows_in,
 }
 
 template <typename REAL>
-SparseStorage<REAL>::SparseStorage( int nRows_in, int nCols_in, int nnz_in,
-                                    double spareRatio, int minInterRowSpace )
+SparseStorage<REAL>::SparseStorage( int64_t nRows_in, int64_t nCols_in, int64_t nnz_in,
+                                    double spareRatio, int64_t minInterRowSpace )
     : nRows( nRows_in ), nCols( nCols_in ), nnz( nnz_in ),
       spareRatio( spareRatio ), minInterRowSpace( minInterRowSpace )
 {
@@ -525,10 +525,10 @@ SparseStorage<REAL>::SparseStorage( int nRows_in, int nCols_in, int nnz_in,
 }
 
 template <typename REAL>
-SparseStorage<REAL>::SparseStorage( REAL* values_in, int* rowstart_in,
-                                    int* columns_in, int nRows_in, int nCols_in,
-                                    int nnz_in, double spareRatio,
-                                    int minInterRowSpace )
+SparseStorage<REAL>::SparseStorage( REAL* values_in, int64_t* rowstart_in,
+                                    int64_t* columns_in, int64_t nRows_in, int64_t nCols_in,
+                                    int64_t nnz_in, double spareRatio,
+                                    int64_t minInterRowSpace )
     : nRows( nRows_in ), nCols( nCols_in ), nnz( nnz_in ),
       spareRatio( spareRatio ), minInterRowSpace( minInterRowSpace )
 {
@@ -543,12 +543,12 @@ SparseStorage<REAL>::SparseStorage( REAL* values_in, int* rowstart_in,
    rowranges.resize( nRows + 1 );
 
    // build storage
-   int shift = 0;
-   for( int r = 0; r < nRows; r++ )
+   int64_t shift = 0;
+   for( int64_t r = 0; r < nRows; r++ )
    {
       rowranges[r].start = rowstart_in[r] + shift;
 
-      for( int j = rowstart_in[r]; j < rowstart_in[r + 1]; j++ )
+      for( int64_t j = rowstart_in[r]; j < rowstart_in[r + 1]; j++ )
       {
          if( values_in[j] != REAL{ 0.0 } )
          {
@@ -564,8 +564,8 @@ SparseStorage<REAL>::SparseStorage( REAL* values_in, int* rowstart_in,
       }
 
       rowranges[r].end = rowstart_in[r + 1] + shift;
-      const int rowsize = rowranges[r].end - rowranges[r].start;
-      const int rowalloc = computeRowAlloc( rowsize );
+      const int64_t rowsize = rowranges[r].end - rowranges[r].start;
+      const int64_t rowalloc = computeRowAlloc( rowsize );
       shift += rowalloc - rowsize;
    }
 
@@ -584,14 +584,14 @@ SparseStorage<REAL>::getTranspose() const
 
    // compute nnz of each row of At (column of A)
 
-   Vec<int> w( size_t( nCols ), 0 );
+   Vec<int64_t> w( size_t( nCols ), 0 );
 
-   for( int r = 0; r < nRows; r++ )
+   for( int64_t r = 0; r < nRows; r++ )
    {
-      const int start = rowranges[r].start;
-      const int end = rowranges[r].end;
+      const int64_t start = rowranges[r].start;
+      const int64_t end = rowranges[r].end;
 
-      for( int j = start; j < end; j++ )
+      for( int64_t j = start; j < end; j++ )
       {
          assert( values[j] != REAL{ 0.0 } );
          w[columns[j]]++;
@@ -606,10 +606,10 @@ SparseStorage<REAL>::getTranspose() const
    // set row ranges of transpose
    transpose.rowranges[0].start = 0;
 
-   for( int i = 1; i <= nCols; i++ )
+   for( int64_t i = 1; i <= nCols; i++ )
    {
-      const int oldstart = transpose.rowranges[i - 1].start;
-      const int oldend = oldstart + w[i - 1];
+      const int64_t oldstart = transpose.rowranges[i - 1].start;
+      const int64_t oldend = oldstart + w[i - 1];
       assert( oldend >= oldstart );
 
       transpose.rowranges[i - 1].end = oldend;
@@ -623,14 +623,14 @@ SparseStorage<REAL>::getTranspose() const
    transpose.rowranges[nCols].end = transpose.nAlloc;
 
    // fill values and columns arrays of transpose
-   for( int r = 0; r < nRows; r++ )
+   for( int64_t r = 0; r < nRows; r++ )
    {
-      const int start = rowranges[r].start;
-      const int end = rowranges[r].end;
+      const int64_t start = rowranges[r].start;
+      const int64_t end = rowranges[r].end;
 
-      for( int j = start; j < end; j++ )
+      for( int64_t j = start; j < end; j++ )
       {
-         const int idx = w[columns[j]];
+         const int64_t idx = w[columns[j]];
 
          assert( idx < transpose.nAlloc );
 
@@ -644,8 +644,8 @@ SparseStorage<REAL>::getTranspose() const
 }
 
 template <typename REAL>
-Vec<int>
-SparseStorage<REAL>::compress( const Vec<int>& rowsize, const Vec<int>& colsize,
+Vec<int64_t>
+SparseStorage<REAL>::compress( const Vec<int64_t>& rowsize, const Vec<int64_t>& colsize,
                                bool full )
 {
    if( full )
@@ -654,13 +654,13 @@ SparseStorage<REAL>::compress( const Vec<int>& rowsize, const Vec<int>& colsize,
       minInterRowSpace = 0;
    }
    // now create and fill storage
-   Vec<int> colsmap( static_cast<std::size_t>( nCols ) );
+   Vec<int64_t> colsmap( static_cast<std::size_t>( nCols ) );
 
    if( nCols > 0 )
    {
-      int colcount = 0;
+      int64_t colcount = 0;
 
-      for( int i = 0; i < nCols; i++ )
+      for( int64_t i = 0; i < nCols; i++ )
       {
          if( colsize[i] >= 0 )
             colsmap[i] = colcount++;
@@ -673,13 +673,13 @@ SparseStorage<REAL>::compress( const Vec<int>& rowsize, const Vec<int>& colsize,
 
    if( nRows > 0 )
    {
-      int offset = 0;
-      int rowcount = 0;
-      for( int r = 0; r < nRows; r++ )
+      int64_t offset = 0;
+      int64_t rowcount = 0;
+      for( int64_t r = 0; r < nRows; r++ )
       {
-         const int start = rowranges[r].start;
-         const int end = rowranges[r].end;
-         const int rowalloc = rowranges[r + 1].start - start;
+         const int64_t start = rowranges[r].start;
+         const int64_t end = rowranges[r].end;
+         const int64_t rowalloc = rowranges[r + 1].start - start;
 
          // empty row?
          if( rowsize[r] == -1 )
@@ -704,7 +704,7 @@ SparseStorage<REAL>::compress( const Vec<int>& rowsize, const Vec<int>& colsize,
             }
 
             offset = std::max(
-                offset + rowalloc - computeRowAlloc( end - start ), 0 );
+                offset + rowalloc - computeRowAlloc( end - start ), int64_t{0} );
 
             ++rowcount;
          }
@@ -730,12 +730,12 @@ SparseStorage<REAL>::compress( const Vec<int>& rowsize, const Vec<int>& colsize,
          columns.shrink_to_fit();
       }
 
-      for( int r = 0; r < nRows; r++ )
+      for( int64_t r = 0; r < nRows; r++ )
       {
-         const int start = rowranges[r].start;
-         const int end = rowranges[r].end;
+         const int64_t start = rowranges[r].start;
+         const int64_t end = rowranges[r].end;
 
-         for( int j = start; j < end; j++ )
+         for( int64_t j = start; j < end; j++ )
          {
             assert( columns[j] >= 0 );
             assert( columns[j] < static_cast<int>( colsmap.size() ) );
@@ -751,40 +751,40 @@ SparseStorage<REAL>::compress( const Vec<int>& rowsize, const Vec<int>& colsize,
 
 template <typename REAL>
 bool
-SparseStorage<REAL>::shiftRows( const int* rowinds, int ninds,
-                                int maxshiftperrow,
-                                const Vec<int>& requiredSpareSpace )
+SparseStorage<REAL>::shiftRows( const int64_t* rowinds, int64_t ninds,
+                                int64_t maxshiftperrow,
+                                const Vec<int64_t>& requiredSpareSpace )
 {
    assert( ninds > 0 );
    assert( rowinds != nullptr );
    assert( requiredSpareSpace.size() == ninds );
    assert( std::is_sorted( rowinds, rowinds + ninds ) );
 
-   for( int i = 0; i != ninds; ++i )
+   for( int64_t i = 0; i != ninds; ++i )
    {
-      const int row = rowinds[i];
-      int missingspace = requiredSpareSpace[i] -
+      const int64_t row = rowinds[i];
+      int64_t missingspace = requiredSpareSpace[i] -
                          ( rowranges[row + 1].start - rowranges[row].end );
       if( missingspace > 0 )
       {
-         int leftbound = i == 0 ? 0 : rowinds[i - 1] + 1;
-         int rightbound = i == ninds - 1 ? nRows : rowinds[i + 1];
+         int64_t leftbound = i == 0 ? 0 : rowinds[i - 1] + 1;
+         int64_t rightbound = i == ninds - 1 ? nRows : rowinds[i + 1];
 
-         int l = row;
-         int r = row + 1;
-         int lastshiftleft = 0;
-         int lastshiftright = 0;
-         int maxshift = maxshiftperrow;
+         int64_t l = row;
+         int64_t r = row + 1;
+         int64_t lastshiftleft = 0;
+         int64_t lastshiftright = 0;
+         int64_t maxshift = maxshiftperrow;
          while( missingspace > 0 )
          {
             if( l > leftbound && r < rightbound )
             {
-               int nspaceleft = std::min(
+               int64_t nspaceleft = std::min(
                    missingspace, rowranges[l].start - rowranges[l - 1].end );
-               int nspaceright = std::min(
+               int64_t nspaceright = std::min(
                    missingspace, rowranges[r + 1].start - rowranges[r].end );
-               int nshiftleft = rowranges[l].end - rowranges[l].start;
-               int nshiftright = rowranges[r].end - rowranges[r].start;
+               int64_t nshiftleft = rowranges[l].end - rowranges[l].start;
+               int64_t nshiftright = rowranges[r].end - rowranges[r].start;
 
                bool goleft;
                if( nshiftleft == 0 )
@@ -857,18 +857,18 @@ SparseStorage<REAL>::shiftRows( const int* rowinds, int ninds,
             } while( rowranges[l].start == rowranges[l - 1].end );
 
             REAL* valsout = &values[rowranges[l].start - lastshiftleft];
-            int* colsout = &columns[rowranges[l].start - lastshiftleft];
+            int64_t* colsout = &columns[rowranges[l].start - lastshiftleft];
 
             assert( rowranges[l - 1].end <=
                     rowranges[l].start - lastshiftleft );
 
             while( l <= row )
             {
-               int shift = &values[rowranges[l].start] - valsout;
+               int64_t shift = &values[rowranges[l].start] - valsout;
 
 #ifndef NDEBUG
                Vec<REAL> tmpvals;
-               Vec<int> tmpinds;
+               Vec<int64_t> tmpinds;
                tmpvals.insert( tmpvals.end(), &values[rowranges[l].start],
                                &values[rowranges[l].end] );
                tmpinds.insert( tmpinds.end(), &columns[rowranges[l].start],
@@ -907,18 +907,18 @@ SparseStorage<REAL>::shiftRows( const int* rowinds, int ninds,
             } while( rowranges[r].end == rowranges[r + 1].start );
 
             REAL* valsout = &values[rowranges[r].end + lastshiftright];
-            int* colsout = &columns[rowranges[r].end + lastshiftright];
+            int64_t* colsout = &columns[rowranges[r].end + lastshiftright];
 
             assert( rowranges[r + 1].start >=
                     rowranges[r].end + lastshiftright );
 
             while( r > row )
             {
-               int shift = valsout - &values[rowranges[r].end];
+               int64_t shift = valsout - &values[rowranges[r].end];
 
 #ifndef NDEBUG
                Vec<REAL> tmpvals;
-               Vec<int> tmpinds;
+               Vec<int64_t> tmpinds;
                tmpvals.insert( tmpvals.end(), &values[rowranges[r].start],
                                &values[rowranges[r].end] );
                tmpinds.insert( tmpinds.end(), &columns[rowranges[r].start],
@@ -963,13 +963,13 @@ SparseStorage<REAL>::shiftRows( const int* rowinds, int ninds,
 }
 
 template <typename REAL>
-Vec<int>
+Vec<int64_t>
 SparseStorage<REAL>::getRowStarts() const
 {
-   int size = getNRows() + 1;
-   Vec<int> colStart( size );
+   int64_t size = getNRows() + 1;
+   Vec<int64_t> colStart( size );
 
-   unsigned int i;
+   int64_t i;
    for( i = 0; i < colStart.size() - 1; ++i )
    {
       colStart[i] = rowranges[i].start;

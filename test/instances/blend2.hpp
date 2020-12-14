@@ -1771,8 +1771,8 @@ blend2()
        "VV620", "VV621", "VV622", "VV623", "VV624", "VV625", "VV626", "VV627",
        "VV628",
    };
-   int nCols = 353;
-   int nRows = 274;
+   int64_t nCols = 353;
+   int64_t nRows = 274;
    ProblemBuilder<double> pb;
    pb.reserve( 1409, 274, 353 );
    pb.setNumRows( nRows );

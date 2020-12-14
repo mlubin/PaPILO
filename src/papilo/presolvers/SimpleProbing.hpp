@@ -77,9 +77,9 @@ SimpleProbing<REAL>::execute( const Problem<REAL>& problem,
    const auto& rflags = constMatrix.getRowFlags();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
-   int nrows = problem.getNRows();
+   int64_t nrows = problem.getNRows();
 
-   for( int i = 0; i != nrows; ++i )
+   for( int64_t i = 0; i != nrows; ++i )
    {
       if( !rflags[i].test( RowFlag::kEquation ) || rowsize[i] <= 2 ||
           activities[i].ninfmin != 0 || activities[i].ninfmax != 0 ||
@@ -94,15 +94,15 @@ SimpleProbing<REAL>::execute( const Problem<REAL>& problem,
 
       auto rowvec = constMatrix.getRowCoefficients( i );
       const REAL* rowvals = rowvec.getValues();
-      const int* rowcols = rowvec.getIndices();
-      const int rowlen = rowvec.getLength();
+      const int64_t* rowcols = rowvec.getIndices();
+      const int64_t rowlen = rowvec.getLength();
 
       REAL bincoef = activities[i].max - rhs_values[i];
-      int bincol = -1;
+      int64_t bincol = -1;
 
-      for( int k = 0; k != rowlen; ++k )
+      for( int64_t k = 0; k != rowlen; ++k )
       {
-         int col = rowcols[k];
+         int64_t col = rowcols[k];
          assert( !cflags[col].test( ColFlag::kUnbounded ) );
          if( !cflags[col].test( ColFlag::kIntegral ) ||
              domains.lower_bounds[col] != 0 || domains.upper_bounds[col] != 1 ||
@@ -128,9 +128,9 @@ SimpleProbing<REAL>::execute( const Problem<REAL>& problem,
              rowlen - 1 );
 
          result = PresolveStatus::kReduced;
-         for( int k = 0; k != rowlen; ++k )
+         for( int64_t k = 0; k != rowlen; ++k )
          {
-            int col = rowcols[k];
+            int64_t col = rowcols[k];
             if( col == bincol )
                continue;
 

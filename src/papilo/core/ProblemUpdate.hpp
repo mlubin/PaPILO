@@ -66,30 +66,30 @@ class ProblemUpdate
    const Num<REAL>& num;
 
    bool postponeSubstitutions;
-   Vec<int> dirty_row_states;
-   Vec<int> dirty_col_states;
+   Vec<int64_t> dirty_row_states;
+   Vec<int64_t> dirty_col_states;
 
-   Vec<int> deleted_cols;
-   Vec<int> redundant_rows;
+   Vec<int64_t> deleted_cols;
+   Vec<int64_t> redundant_rows;
 
-   Vec<int> changed_activities;
-   Vec<int> singletonRows;
-   Vec<int> singletonColumns;
-   Vec<int> emptyColumns;
-   int firstNewSingletonCol;
+   Vec<int64_t> changed_activities;
+   Vec<int64_t> singletonRows;
+   Vec<int64_t> singletonColumns;
+   Vec<int64_t> emptyColumns;
+   int64_t firstNewSingletonCol;
 
    MatrixBuffer<REAL> matrix_buffer;
-   Vec<int> intbuffer;
+   Vec<int64_t> intbuffer;
    Vec<REAL> realbuffer;
    Vec<Triplet<REAL>> tripletbuffer;
 
    Vec<PresolveMethod<REAL>*> compress_observers;
 
-   Vec<int> random_col_perm;
-   Vec<int> random_row_perm;
+   Vec<int64_t> random_col_perm;
+   Vec<int64_t> random_row_perm;
 
-   int lastcompress_ndelcols;
-   int lastcompress_ndelrows;
+   int64_t lastcompress_ndelcols;
+   int64_t lastcompress_ndelrows;
 
    enum class State : uint8_t
    {
@@ -104,7 +104,7 @@ class ProblemUpdate
 
    template <typename... Args>
    void
-   setColState( int col, Args... flags )
+   setColState( int64_t col, Args... flags )
    {
       assert( col >= 0 && col < problem.getNCols() );
 
@@ -116,7 +116,7 @@ class ProblemUpdate
 
    template <typename... Args>
    void
-   setRowState( int row, Args... flags )
+   setRowState( int64_t row, Args... flags )
    {
       assert( row >= 0 && row < problem.getNRows() );
 
@@ -152,20 +152,20 @@ class ProblemUpdate
    }
 
    void
-   update_activity( ActivityChange actChange, int rowid,
+   update_activity( ActivityChange actChange, int64_t rowid,
                     RowActivity<REAL>& activity );
 
    PresolveStatus
-   fixCol( int col, REAL val );
+   fixCol( int64_t col, REAL val );
 
    PresolveStatus
-   changeLB( int col, REAL val );
+   changeLB( int64_t col, REAL val );
 
    PresolveStatus
-   changeUB( int col, REAL val );
+   changeUB( int64_t col, REAL val );
 
    void
-   markRowRedundant( int row )
+   markRowRedundant( int64_t row )
    {
       RowFlags& rflags = problem.getRowFlags()[row];
       if( !rflags.test( RowFlag::kRedundant ) )
@@ -183,7 +183,7 @@ class ProblemUpdate
    }
 
    void
-   markColFixed( int col )
+   markColFixed( int64_t col )
    {
       ColFlags& cflags = problem.getColFlags()[col];
       assert( !cflags.test( ColFlag::kInactive ) );
@@ -228,12 +228,12 @@ class ProblemUpdate
 
    /// adds a singleton row as a bound change and marks the row redundant
    PresolveStatus
-   removeSingletonRow( int row );
+   removeSingletonRow( int64_t row );
 
    /// cleanup small coefficients from single row, adds coefficients changes to
    /// the matrix buffer
    void
-   cleanupSmallCoefficients( int row );
+   cleanupSmallCoefficients( int64_t row );
 
    PresolveStatus
    removeEmptyColumns();
@@ -263,35 +263,35 @@ class ProblemUpdate
    void
    clearStates();
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getChangedActivities() const
    {
       return changed_activities;
    }
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getSingletonCols() const
    {
       return singletonColumns;
    }
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getRandomColPerm() const
    {
       return random_col_perm;
    }
 
-   const Vec<int>&
+   const Vec<int64_t>&
    getRandomRowPerm() const
    {
       return random_row_perm;
    }
 
    bool
-   isColBetterForSubstitution( int col1, int col2 ) const
+   isColBetterForSubstitution( int64_t col1, int64_t col2 ) const
    {
-      int col1size = problem.getColSizes()[col1];
-      int col2size = problem.getColSizes()[col2];
+      int64_t col1size = problem.getColSizes()[col1];
+      int64_t col2size = problem.getColSizes()[col2];
 
       // first criterion is sparsity
       if( col1size < col2size )
@@ -380,19 +380,19 @@ ProblemUpdate<REAL>::ProblemUpdate( Problem<REAL>& problem,
 
    std::ranlux24 randgen( presolveOptions.randomseed );
    random_col_perm.resize( problem.getNCols() );
-   for( int i = 0; i < problem.getNCols(); ++i )
+   for( int64_t i = 0; i < problem.getNCols(); ++i )
       random_col_perm[i] = i;
    std::shuffle( random_col_perm.begin(), random_col_perm.end(), randgen );
 
    random_row_perm.resize( problem.getNRows() );
-   for( int i = 0; i < problem.getNRows(); ++i )
+   for( int64_t i = 0; i < problem.getNRows(); ++i )
       random_row_perm[i] = i;
    std::shuffle( random_row_perm.begin(), random_row_perm.end(), randgen );
 }
 
 template <typename REAL>
 void
-ProblemUpdate<REAL>::update_activity( ActivityChange actChange, int rowid,
+ProblemUpdate<REAL>::update_activity( ActivityChange actChange, int64_t rowid,
                                       RowActivity<REAL>& activity )
 {
    if( activity.lastchange == stats.nrounds )
@@ -414,7 +414,7 @@ ProblemUpdate<REAL>::update_activity( ActivityChange actChange, int rowid,
 
 template <typename REAL>
 PresolveStatus
-ProblemUpdate<REAL>::fixCol( int col, REAL val )
+ProblemUpdate<REAL>::fixCol( int64_t col, REAL val )
 {
    ConstraintMatrix<REAL>& constraintMatrix = problem.getConstraintMatrix();
    Vec<REAL>& lbs = problem.getLowerBounds();
@@ -424,7 +424,7 @@ ProblemUpdate<REAL>::fixCol( int col, REAL val )
    if( cflags[col].test( ColFlag::kSubstituted ) )
       return PresolveStatus::kUnchanged;
 
-   auto updateActivity = [this]( ActivityChange actChange, int rowid,
+   auto updateActivity = [this]( ActivityChange actChange, int64_t rowid,
                                  RowActivity<REAL>& activity ) {
       update_activity( actChange, rowid, activity );
    };
@@ -517,7 +517,7 @@ ProblemUpdate<REAL>::fixCol( int col, REAL val )
 
 template <typename REAL>
 PresolveStatus
-ProblemUpdate<REAL>::changeLB( int col, REAL val )
+ProblemUpdate<REAL>::changeLB( int64_t col, REAL val )
 {
    ConstraintMatrix<REAL>& constraintMatrix = problem.getConstraintMatrix();
    Vec<ColFlags>& cflags = problem.getColFlags();
@@ -529,7 +529,7 @@ ProblemUpdate<REAL>::changeLB( int col, REAL val )
 
    REAL newbound = val;
 
-   auto updateActivity = [this]( ActivityChange actChange, int rowid,
+   auto updateActivity = [this]( ActivityChange actChange, int64_t rowid,
                                  RowActivity<REAL>& activity ) {
       update_activity( actChange, rowid, activity );
    };
@@ -606,7 +606,7 @@ ProblemUpdate<REAL>::changeLB( int col, REAL val )
 
 template <typename REAL>
 PresolveStatus
-ProblemUpdate<REAL>::changeUB( int col, REAL val )
+ProblemUpdate<REAL>::changeUB( int64_t col, REAL val )
 {
    ConstraintMatrix<REAL>& constraintMatrix = problem.getConstraintMatrix();
    Vec<ColFlags>& cflags = problem.getColFlags();
@@ -618,7 +618,7 @@ ProblemUpdate<REAL>::changeUB( int col, REAL val )
 
    REAL newbound = val;
 
-   auto updateActivity = [this]( ActivityChange actChange, int rowid,
+   auto updateActivity = [this]( ActivityChange actChange, int64_t rowid,
                                  RowActivity<REAL>& activity ) {
       update_activity( actChange, rowid, activity );
    };
@@ -706,7 +706,7 @@ ProblemUpdate<REAL>::compress( bool full )
                    problem.getNRows(), problem.getNCols(), getNActiveRows(),
                    getNActiveCols() );
 
-   std::pair<Vec<int>, Vec<int>> mappings = problem.compress( full );
+   std::pair<Vec<int64_t>, Vec<int64_t>> mappings = problem.compress( full );
    assert( redundant_rows.empty() );
    assert( deleted_cols.empty() );
    assert( dirty_col_states.empty() );
@@ -743,12 +743,12 @@ ProblemUpdate<REAL>::compress( bool full )
        },
        // update column index sets
        [this, &mappings, full]() {
-          int numNewSingletonCols =
+          int64_t numNewSingletonCols =
               static_cast<int>( singletonColumns.size() ) -
               firstNewSingletonCol;
           compress_index_vector( mappings.second, singletonColumns );
           firstNewSingletonCol =
-              std::max( 0, static_cast<int>( singletonColumns.size() ) -
+              std::max( int64_t{0}, static_cast<int64_t>( singletonColumns.size() ) -
                                numNewSingletonCols );
           if( full )
              singletonColumns.shrink_to_fit();
@@ -777,7 +777,7 @@ ProblemUpdate<REAL>::checkChangedActivities()
    const Vec<REAL>& rhs = consmatrix.getRightHandSides();
 
    PresolveStatus status = PresolveStatus::kUnchanged;
-   for( int r : changed_activities )
+   for( int64_t r : changed_activities )
    {
       if( rflags[r].test( RowFlag::kRedundant ) )
          continue;
@@ -822,7 +822,7 @@ ProblemUpdate<REAL>::flushChangedCoeffs()
       Vec<RowActivity<REAL>>& activities = problem.getRowActivities();
 
       auto coeffChanged = [this, &lbs, &cflags, &ubs, &activities](
-                              int row, int col, REAL oldval, REAL newval ) {
+                              int64_t row, int64_t col, REAL oldval, REAL newval ) {
          update_activities_after_coeffchange(
              lbs[col], ubs[col], cflags[col], oldval, newval, activities[row],
              [this, row]( ActivityChange actChange,
@@ -861,7 +861,7 @@ ProblemUpdate<REAL>::flush()
    // remove all singleton rows after applying the coefficient changes
    if( !singletonRows.empty() )
    {
-      for( int row : singletonRows )
+      for( int64_t row : singletonRows )
       {
          if( removeSingletonRow( row ) == PresolveStatus::kInfeasible )
          {
@@ -882,7 +882,7 @@ ProblemUpdate<REAL>::flush()
 
    auto iter =
        std::remove_if( changed_activities.begin(), changed_activities.end(),
-                       [&rflags]( int row ) {
+                       [&rflags]( int64_t row ) {
                           return rflags[row].test( RowFlag::kRedundant );
                        } );
 
@@ -900,7 +900,7 @@ ProblemUpdate<REAL>::flush()
    // after deleting rows and cols check again for singleton rows
    // if( !singletonRows.empty() )
    //{
-   //   for( int row : singletonRows )
+   //   for( int64_t row : singletonRows )
    //   {
    //      if( removeSingletonRow( row ) == PresolveStatus::kInfeasible )
    //         return PresolveStatus::kInfeasible;
@@ -913,9 +913,9 @@ ProblemUpdate<REAL>::flush()
    // singletons anymore
    if( !singletonColumns.empty() )
    {
-      const Vec<int>& colsizes = problem.getColSizes();
-      int k = 0;
-      int i;
+      const Vec<int64_t>& colsizes = problem.getColSizes();
+      int64_t k = 0;
+      int64_t i;
       assert( firstNewSingletonCol <= singletonColumns.size() );
       for( i = 0; i != firstNewSingletonCol; ++i )
       {
@@ -927,7 +927,7 @@ ProblemUpdate<REAL>::flush()
 
       firstNewSingletonCol -= k;
 
-      int nsingletoncols = static_cast<int>( singletonColumns.size() );
+      int64_t nsingletoncols = static_cast<int>( singletonColumns.size() );
       assert( i <= nsingletoncols );
       for( ; i != nsingletoncols; ++i )
       {
@@ -943,7 +943,7 @@ ProblemUpdate<REAL>::flush()
       assert( firstNewSingletonCol >= 0 &&
               firstNewSingletonCol <= nsingletoncols );
       assert( std::all_of( singletonColumns.begin(), singletonColumns.end(),
-                           [&]( int col ) { return colsizes[col] == 1; } ) );
+                           [&]( int64_t col ) { return colsizes[col] == 1; } ) );
    }
 
    // fix empty columns
@@ -958,7 +958,7 @@ void
 ProblemUpdate<REAL>::clearStates()
 {
    // clear states of rows
-   for( int row : dirty_row_states )
+   for( int64_t row : dirty_row_states )
       row_state[row] = State::kUnmodified;
 
    dirty_row_states.clear();
@@ -969,7 +969,7 @@ ProblemUpdate<REAL>::clearStates()
        } ) );
 
    // clear states of columns
-   for( int col : dirty_col_states )
+   for( int64_t col : dirty_col_states )
       col_state[col] = State::kUnmodified;
 
    dirty_col_states.clear();
@@ -1004,7 +1004,7 @@ ProblemUpdate<REAL>::removeFixedCols()
    Vec<REAL>& lhs = consMatrix.getLeftHandSides();
    Vec<REAL>& rhs = consMatrix.getRightHandSides();
 
-   for( int col : deleted_cols )
+   for( int64_t col : deleted_cols )
    {
       if( !cflags[col].test( ColFlag::kFixed ) )
          continue;
@@ -1026,13 +1026,13 @@ ProblemUpdate<REAL>::removeFixedCols()
 
       // fixed to nonzero value, so update sides and activities
       auto colvec = consMatrix.getColumnCoefficients( col );
-      int collen = colvec.getLength();
-      const int* colrows = colvec.getIndices();
+      int64_t collen = colvec.getLength();
+      const int64_t* colrows = colvec.getIndices();
       const REAL* colvals = colvec.getValues();
 
-      for( int i = 0; i != collen; ++i )
+      for( int64_t i = 0; i != collen; ++i )
       {
-         int row = colrows[i];
+         int64_t row = colrows[i];
 
          // if the row is redundant it will also be removed and does not need
          // to be updated
@@ -1066,13 +1066,13 @@ ProblemUpdate<REAL>::trivialColumnPresolve()
    Vec<REAL>& lbs = problem.getLowerBounds();
    Vec<REAL>& ubs = problem.getUpperBounds();
    Vec<ColFlags>& cflags = problem.getColFlags();
-   Vec<int>& colsize = problem.getColSizes();
+   Vec<int64_t>& colsize = problem.getColSizes();
    Vec<REAL>& obj = problem.getObjective().coefficients;
    Vec<Locks>& locks = problem.getLocks();
 
    PresolveStatus status = PresolveStatus::kUnchanged;
 
-   for( int col = 0; col != problem.getNCols(); ++col )
+   for( int64_t col = 0; col != problem.getNCols(); ++col )
    {
       if( cflags[col].test( ColFlag::kInactive ) )
          continue;
@@ -1218,7 +1218,7 @@ PresolveStatus
 ProblemUpdate<REAL>::trivialRowPresolve()
 {
    ConstraintMatrix<REAL>& consMatrix = problem.getConstraintMatrix();
-   Vec<int>& rowsize = consMatrix.getRowSizes();
+   Vec<int64_t>& rowsize = consMatrix.getRowSizes();
    Vec<RowFlags>& rflags = consMatrix.getRowFlags();
    Vec<RowActivity<REAL>>& activities = problem.getRowActivities();
    const Vec<REAL>& lhs = consMatrix.getLeftHandSides();
@@ -1227,7 +1227,7 @@ ProblemUpdate<REAL>::trivialRowPresolve()
    assert( activities.size() == problem.getNRows() );
    PresolveStatus status = PresolveStatus::kUnchanged;
 
-   for( int row = 0; row != problem.getNRows(); ++row )
+   for( int64_t row = 0; row != problem.getNRows(); ++row )
    {
       switch( rowsize[row] )
       {
@@ -1339,7 +1339,7 @@ ProblemUpdate<REAL>::trivialPresolve()
        redundant_rows, deleted_cols, problem.getRowActivities(), singletonRows,
        singletonColumns, emptyColumns );
 
-   for( int row : singletonRows )
+   for( int64_t row : singletonRows )
    {
       status = removeSingletonRow( row );
       if( status == PresolveStatus::kInfeasible )
@@ -1353,15 +1353,15 @@ ProblemUpdate<REAL>::trivialPresolve()
 
    if( !singletonColumns.empty() )
    {
-      int numNewSingletonCols =
+      int64_t numNewSingletonCols =
           static_cast<int>( singletonColumns.size() ) - firstNewSingletonCol;
       assert( numNewSingletonCols >= 0 );
       auto it = std::remove_if(
           singletonColumns.begin(), singletonColumns.end(),
-          [this]( int c ) { return problem.getColSizes()[c] != 1; } );
+          [this]( int64_t c ) { return problem.getColSizes()[c] != 1; } );
       singletonColumns.erase( it, singletonColumns.end() );
       firstNewSingletonCol =
-          std::max( 0, static_cast<int>( singletonColumns.size() ) -
+          std::max( int64_t{0}, static_cast<int64_t>( singletonColumns.size() ) -
                            numNewSingletonCols );
    }
 
@@ -1374,7 +1374,7 @@ ProblemUpdate<REAL>::trivialPresolve()
 
    const Vec<RowFlags>& rflags = problem.getRowFlags();
 
-   for( int r = 0; r != problem.getNRows(); ++r )
+   for( int64_t r = 0; r != problem.getNRows(); ++r )
    {
       if( rflags[r].test( RowFlag::kRedundant ) )
          continue;
@@ -1393,10 +1393,10 @@ ProblemUpdate<REAL>::trivialPresolve()
 
 template <typename REAL>
 PresolveStatus
-ProblemUpdate<REAL>::removeSingletonRow( int row )
+ProblemUpdate<REAL>::removeSingletonRow( int64_t row )
 {
    ConstraintMatrix<REAL>& consMatrix = problem.getConstraintMatrix();
-   const Vec<int>& rowsize = consMatrix.getRowSizes();
+   const Vec<int64_t>& rowsize = consMatrix.getRowSizes();
    Vec<RowFlags>& rflags = consMatrix.getRowFlags();
 
    PresolveStatus status = PresolveStatus::kUnchanged;
@@ -1409,7 +1409,7 @@ ProblemUpdate<REAL>::removeSingletonRow( int row )
    assert( rowvec.getLength() == 1 );
 
    const REAL val = rowvec.getValues()[0];
-   const int col = rowvec.getIndices()[0];
+   const int64_t col = rowvec.getIndices()[0];
    const REAL lhs = consMatrix.getLeftHandSides()[row];
    const REAL rhs = consMatrix.getRightHandSides()[row];
 
@@ -1446,7 +1446,7 @@ ProblemUpdate<REAL>::removeSingletonRow( int row )
 
 template <typename REAL>
 void
-ProblemUpdate<REAL>::cleanupSmallCoefficients( int row )
+ProblemUpdate<REAL>::cleanupSmallCoefficients( int64_t row )
 {
    ConstraintMatrix<REAL>& consMatrix = problem.getConstraintMatrix();
    const Vec<REAL>& lbs = problem.getLowerBounds();
@@ -1457,10 +1457,10 @@ ProblemUpdate<REAL>::cleanupSmallCoefficients( int row )
 
    // arrays with nonzeros and their column index of this row
    const REAL* values = rowvec.getValues();
-   const int* columns = rowvec.getIndices();
+   const int64_t* columns = rowvec.getIndices();
 
    // number of nonzeros in row, i.e. length of arrays above
-   int len = rowvec.getLength();
+   int64_t len = rowvec.getLength();
 
    // acces to sides of the given row
    REAL& lhs = consMatrix.getLeftHandSides()[row];
@@ -1469,9 +1469,9 @@ ProblemUpdate<REAL>::cleanupSmallCoefficients( int row )
 
    // loop over non-zeros of this row
    REAL total_mod = 0;
-   for( int i = 0; i != len; ++i )
+   for( int64_t i = 0; i != len; ++i )
    {
-      int col = columns[i];
+      int64_t col = columns[i];
 
       if( cflags[col].test( ColFlag::kUnbounded, ColFlag::kInactive ) )
          continue;
@@ -1540,8 +1540,8 @@ ProblemUpdate<REAL>::removeEmptyColumns()
    {
       Objective<REAL>& obj = problem.getObjective();
       VariableDomains<REAL>& domains = problem.getVariableDomains();
-      Vec<int>& colsize = problem.getConstraintMatrix().getColSizes();
-      for( int col : emptyColumns )
+      Vec<int64_t>& colsize = problem.getConstraintMatrix().getColSizes();
+      for( int64_t col : emptyColumns )
       {
          if( colsize[col] != 0 )
             continue;
@@ -1635,7 +1635,7 @@ ProblemUpdate<REAL>::checkTransactionConflicts( const Reduction<REAL>* first,
       else if( reduction.row < 0 )
       {
          assert( reduction.col >= 0 );
-         int colop = reduction.row;
+         int64_t colop = reduction.row;
          switch( colop )
          {
          case ColReduction::LOCKED_STRONG:
@@ -1676,7 +1676,7 @@ ProblemUpdate<REAL>::checkTransactionConflicts( const Reduction<REAL>* first,
       else
       {
          assert( reduction.row >= 0 && reduction.col < 0 );
-         int rowop = reduction.col;
+         int64_t rowop = reduction.col;
          switch( rowop )
          {
          case RowReduction::LOCKED_STRONG:
@@ -1725,7 +1725,7 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
    ConstraintMatrix<REAL>& constraintMatrix = problem.getConstraintMatrix();
    Vec<RowFlags>& rflags = constraintMatrix.getRowFlags();
 
-   auto updateActivity = [this]( ActivityChange actChange, int rowid,
+   auto updateActivity = [this]( ActivityChange actChange, int64_t rowid,
                                  RowActivity<REAL>& activity ) {
       update_activity( actChange, rowid, activity );
    };
@@ -1753,7 +1753,7 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
       else if( reduction.row < 0 )
       {
          assert( reduction.col >= 0 );
-         int colop = reduction.row;
+         int64_t colop = reduction.row;
          switch( colop )
          {
          case ColReduction::NONE:
@@ -1810,8 +1810,8 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
          }
          case ColReduction::SUBSTITUTE:
          {
-            int col = reduction.col;
-            int equalityrow = static_cast<int>( reduction.newval );
+            int64_t col = reduction.col;
+            int64_t equalityrow = static_cast<int>( reduction.newval );
 
             if( constraintMatrix.getRowCoefficients( equalityrow )
                     .getLength() == 1 )
@@ -1837,8 +1837,8 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
                return ApplyResult::kRejected;
 
             const auto colvec = constraintMatrix.getColumnCoefficients( col );
-            const int* colindices = colvec.getIndices();
-            const int nbrelevantrows = colvec.getLength();
+            const int64_t* colindices = colvec.getIndices();
+            const int64_t nbrelevantrows = colvec.getLength();
 
             assert(
                 !cflags[col].test( ColFlag::kSubstituted, ColFlag::kFixed ) );
@@ -1848,16 +1848,16 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             problem.substituteVarInObj( num, col, equalityrow );
 
             // update row states
-            for( int k = 0; k < nbrelevantrows; ++k )
+            for( int64_t k = 0; k < nbrelevantrows; ++k )
                setRowState( colindices[k], State::kModified );
 
             // update col states
             const auto rowvec =
                 constraintMatrix.getRowCoefficients( equalityrow );
-            const int length = rowvec.getLength();
-            const int* indices = rowvec.getIndices();
+            const int64_t length = rowvec.getLength();
+            const int64_t* indices = rowvec.getIndices();
 
-            for( int j = 0; j < length; ++j )
+            for( int64_t j = 0; j < length; ++j )
                setColState( indices[j], State::kModified );
 
             auto eqRHS = constraintMatrix.getLeftHandSides()[equalityrow];
@@ -1904,8 +1904,8 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
          }
          case ColReduction::SUBSTITUTE_OBJ:
          {
-            int col = reduction.col;
-            int equalityrow = static_cast<int>( reduction.newval );
+            int64_t col = reduction.col;
+            int64_t equalityrow = static_cast<int>( reduction.newval );
 
             assert( !cflags[col].test( ColFlag::kInactive ) );
             cflags[col].set( ColFlag::kSubstituted );
@@ -1941,10 +1941,10 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             postsolve.notifySubstitution(
                 col, rowvec, constraintMatrix.getLeftHandSides()[equalityrow] );
 
-            const int length = rowvec.getLength();
-            const int* indices = rowvec.getIndices();
+            const int64_t length = rowvec.getLength();
+            const int64_t* indices = rowvec.getIndices();
 
-            for( int j = 0; j != length; ++j )
+            for( int64_t j = 0; j != length; ++j )
                setColState( indices[j], State::kModified );
 
             // statistics
@@ -1959,8 +1959,8 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
          }
          case ColReduction::PARALLEL:
          {
-            int col1 = reduction.col;
-            int col2 = static_cast<int>( reduction.newval );
+            int64_t col1 = reduction.col;
+            int64_t col2 = static_cast<int>( reduction.newval );
 
             if( cflags[col1].test( ColFlag::kInactive ) ||
                 cflags[col2].test( ColFlag::kInactive ) )
@@ -1972,10 +1972,10 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             auto col1vec = constraintMatrix.getColumnCoefficients( col1 );
             auto col2vec = constraintMatrix.getColumnCoefficients( col2 );
 
-            const int* inds = col1vec.getIndices();
+            const int64_t* inds = col1vec.getIndices();
             const REAL* vals1 = col1vec.getValues();
             const REAL* vals2 = col2vec.getValues();
-            const int collen = col1vec.getLength();
+            const int64_t collen = col1vec.getLength();
 
             assert( collen > 0 );
             REAL col2scale = vals1[0] / vals2[0];
@@ -2181,13 +2181,13 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
          }
          case ColReduction::REPLACE:
          {
-            int col1 = reduction.col;
+            int64_t col1 = reduction.col;
             REAL factor = reduction.newval;
 
             // get the rest of the information from the next reduction
             ++iter;
             assert( iter->row == ColReduction::NONE );
-            int col2 = iter->col;
+            int64_t col2 = iter->col;
             REAL offset = iter->newval;
 
             // one variable is fixed, try to fix the other one
@@ -2248,7 +2248,7 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
 
             // set up the equality
             // x_1 - factor * x_2 = offset
-            int indices[] = { col1, col2 };
+            int64_t indices[] = { col1, col2 };
             REAL coefficients[] = { 1.0, -factor };
             // argument needs to be sorted
             if( col1 > col2 )
@@ -2264,8 +2264,8 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
                     presolveOptions.maxshiftperrow, intbuffer ) )
             {
                auto colvec = constraintMatrix.getColumnCoefficients( col1 );
-               const int* colindices = colvec.getIndices();
-               int length = colvec.getLength();
+               const int64_t* colindices = colvec.getIndices();
+               int64_t length = colvec.getLength();
 
                cflags[col1].set( ColFlag::kSubstituted );
 
@@ -2275,7 +2275,7 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
                   --problem.getNumContinuousCols();
 
                // update row flags
-               for( int k = 0; k < length; ++k )
+               for( int64_t k = 0; k < length; ++k )
                   setRowState( colindices[k], State::kModified );
 
                // perform changes in matrix and sides
@@ -2316,7 +2316,7 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
       else
       {
          assert( reduction.row >= 0 && reduction.col < 0 );
-         int rowop = reduction.col;
+         int64_t rowop = reduction.col;
          switch( rowop )
          {
          case RowReduction::NONE:
@@ -2335,10 +2335,10 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             {
                auto rowvec =
                    constraintMatrix.getRowCoefficients( reduction.row );
-               const int rowlen = rowvec.getLength();
-               const int* rowcols = rowvec.getIndices();
+               const int64_t rowlen = rowvec.getLength();
+               const int64_t* rowcols = rowvec.getIndices();
 
-               for( int i = 0; i != rowlen; ++i )
+               for( int64_t i = 0; i != rowlen; ++i )
                   setColState( rowcols[i], State::kModified );
             }
 
@@ -2356,9 +2356,9 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             {
                auto rowvec =
                    constraintMatrix.getRowCoefficients( reduction.row );
-               const int rowlen = rowvec.getLength();
-               const int* rowcols = rowvec.getIndices();
-               for( int i = 0; i != rowlen; ++i )
+               const int64_t rowlen = rowvec.getLength();
+               const int64_t* rowcols = rowvec.getIndices();
+               for( int64_t i = 0; i != rowlen; ++i )
                   setColState( rowcols[i], State::kModified );
             }
 
@@ -2396,26 +2396,26 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             break;
          case RowReduction::SPARSIFY:
          {
-            int nsparsifyrows = static_cast<int>( reduction.newval );
-            int eqrow = reduction.row;
+            int64_t nsparsifyrows = static_cast<int>( reduction.newval );
+            int64_t eqrow = reduction.row;
             assert( matrix_buffer.empty() );
 
-            int ncancel = 0;
-            int ncanceledrows = 0;
+            int64_t ncancel = 0;
+            int64_t ncanceledrows = 0;
 
             auto eqrowvec = constraintMatrix.getRowCoefficients( eqrow );
             const REAL& eqrhs = constraintMatrix.getRightHandSides()[eqrow];
-            int eqlen = eqrowvec.getLength();
+            int64_t eqlen = eqrowvec.getLength();
 
-            for( int i = 0; i != nsparsifyrows; ++i )
+            for( int64_t i = 0; i != nsparsifyrows; ++i )
             {
                ++iter;
-               int candrow = iter->row;
+               int64_t candrow = iter->row;
                const REAL& scale = iter->newval;
 
                assert( candrow != eqrow );
 
-               int canceled = constraintMatrix.sparsify(
+               int64_t canceled = constraintMatrix.sparsify(
                    num, eqrow, scale, candrow, intbuffer, realbuffer,
                    problem.getVariableDomains(), changed_activities,
                    problem.getRowActivities(), singletonRows, singletonColumns,
@@ -2441,9 +2441,9 @@ ProblemUpdate<REAL>::applyTransaction( const Reduction<REAL>* first,
             if( ncancel != 0 )
             {
                stats.ncoefchgs += eqlen * ncanceledrows;
-               const int* eqrowcols = eqrowvec.getIndices();
+               const int64_t* eqrowcols = eqrowvec.getIndices();
 
-               for( int j = 0; j != eqlen; ++j )
+               for( int64_t j = 0; j != eqlen; ++j )
                   setColState( eqrowcols[j], State::kModified );
             }
          }

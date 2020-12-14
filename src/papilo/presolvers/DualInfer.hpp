@@ -83,8 +83,8 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    const auto& cflags = problem.getColFlags();
    const auto& rowsize = consMatrix.getRowSizes();
    const auto& colsize = consMatrix.getColSizes();
-   const int ncols = problem.getNCols();
-   const int nrows = problem.getNRows();
+   const int64_t ncols = problem.getNCols();
+   const int64_t nrows = problem.getNRows();
    const auto& activities = problem.getRowActivities();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
@@ -94,22 +94,22 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    this->skipRounds( this->getNCalls() );
 
    Vec<RowActivity<REAL>> activitiesCopy( activities );
-   auto checkNonImpliedBounds = [&]( int col, bool& lbinf, bool& ubinf ) {
+   auto checkNonImpliedBounds = [&]( int64_t col, bool& lbinf, bool& ubinf ) {
       const REAL& lb = lbValues[col];
       const REAL& ub = ubValues[col];
       ColFlags colf = cflags[col];
 
       auto colvec = consMatrix.getColumnCoefficients( col );
-      const int len = colvec.getLength();
-      const int* inds = colvec.getIndices();
+      const int64_t len = colvec.getLength();
+      const int64_t* inds = colvec.getIndices();
       const REAL* vals = colvec.getValues();
 
-      int i = 0;
+      int64_t i = 0;
       while(
           ( !colf.test( ColFlag::kLbInf ) || !colf.test( ColFlag::kUbInf ) ) &&
           i != len )
       {
-         int row = inds[i];
+         int64_t row = inds[i];
 
          assert( !consMatrix.isRowRedundant( row ) );
 
@@ -161,7 +161,7 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    dualLB.resize( nrows, REAL{ 0 } );
    dualUB.resize( nrows, REAL{ 0 } );
 
-   for( int i = 0; i != nrows; ++i )
+   for( int64_t i = 0; i != nrows; ++i )
    {
       if( consMatrix.isRowRedundant( i ) )
          continue;
@@ -182,8 +182,8 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
 
    Vec<std::pair<int, int>> checkRedundantBounds;
    checkRedundantBounds.reserve( ncols );
-   const Vec<int>& colperm = problemUpdate.getRandomColPerm();
-   for( int c = 0; c != ncols; ++c )
+   const Vec<int64_t>& colperm = problemUpdate.getRandomColPerm();
+   for( int64_t c = 0; c != ncols; ++c )
    {
       assert( !dualRowFlags[c].test( RowFlag::kLhsInf ) );
       assert( !dualRowFlags[c].test( RowFlag::kRhsInf ) );
@@ -215,7 +215,7 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
 
    for( std::pair<int, int> pair : checkRedundantBounds )
    {
-      int c = pair.second;
+      int64_t c = pair.second;
       assert( colsize[c] > 0 );
 
       bool lbinf;
@@ -240,10 +240,10 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    // compute initial activities, skip redundant rows
    Vec<RowActivity<REAL>> dualActivities( ncols );
 
-   Vec<int> changedActivity;
-   Vec<int> nextChangedActivity;
+   Vec<int64_t> changedActivity;
+   Vec<int64_t> nextChangedActivity;
 
-   auto checkRedundancy = [&]( int dualRow ) {
+   auto checkRedundancy = [&]( int64_t dualRow ) {
       if( ( dualRowFlags[dualRow].test( RowFlag::kLhsInf ) ||
             ( dualActivities[dualRow].ninfmin == 0 &&
               num.isFeasGE( dualActivities[dualRow].min,
@@ -256,7 +256,7 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
       return false;
    };
 
-   for( int i = 0; i != ncols; ++i )
+   for( int64_t i = 0; i != ncols; ++i )
    {
       if( dualRowFlags[i].test( RowFlag::kRedundant ) )
       {
@@ -287,8 +287,8 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    }
 
    // do domain propagation
-   int nrounds = 0;
-   auto boundChanged = [&]( BoundChange boundChg, int dualCol, REAL newbound ) {
+   int64_t nrounds = 0;
+   auto boundChanged = [&]( BoundChange boundChg, int64_t dualCol, REAL newbound ) {
       auto rowvec = consMatrix.getRowCoefficients( dualCol );
 
       bool oldboundinf;
@@ -386,12 +386,12 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
       }
 
       const REAL* vals = rowvec.getValues();
-      const int* inds = rowvec.getIndices();
-      const int len = rowvec.getLength();
+      const int64_t* inds = rowvec.getIndices();
+      const int64_t len = rowvec.getLength();
 
-      for( int i = 0; i != len; ++i )
+      for( int64_t i = 0; i != len; ++i )
       {
-         int dualRow = inds[i];
+         int64_t dualRow = inds[i];
 
          if( dualRowFlags[dualRow].test( RowFlag::kRedundant ) )
             continue;
@@ -432,7 +432,7 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    {
       Message::debug( this, "dual progation round {} on {} dual rows\n",
                       nrounds, changedActivity.size() );
-      for( int dualRow : changedActivity )
+      for( int64_t dualRow : changedActivity )
       {
          if( dualRowFlags[dualRow].test( RowFlag::kRedundant ) )
             continue;
@@ -455,12 +455,12 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
    }
 
    // analyze dual domains:
-   int impliedeqs = 0;
-   int fixedints = 0;
-   int fixedconts = 0;
+   int64_t impliedeqs = 0;
+   int64_t fixedints = 0;
+   int64_t fixedconts = 0;
 
    // change inequality rows to equations if their dual value cannot be zero
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       if( consMatrix.isRowRedundant( i ) )
          continue;
@@ -501,7 +501,7 @@ DualInfer<REAL>::execute( const Problem<REAL>& problem,
 
    // use dualActivities to compute reduced cost bounds and use them to fix
    // variables
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       if( colsize[i] <= 0 )
          continue;

@@ -2125,8 +2125,8 @@ p0548()
        "C1537", "C1538", "C1539", "C1540", "C1541", "C1542", "C1543", "C1544",
        "C1545", "C1546", "C1547", "C1548",
    };
-   int nCols = 548;
-   int nRows = 176;
+   int64_t nCols = 548;
+   int64_t nRows = 176;
    ProblemBuilder<double> pb;
    pb.reserve( 1711, 176, 548 );
    pb.setNumRows( nRows );

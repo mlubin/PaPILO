@@ -67,10 +67,10 @@ struct VariableDomains
    Vec<ColFlags> flags;
 
    void
-   compress( const Vec<int>& colmapping, bool full = false );
+   compress( const Vec<int64_t>& colmapping, bool full = false );
 
    bool
-   isBinary( int col ) const
+   isBinary( int64_t col ) const
    {
       return flags[col].test( ColFlag::kIntegral ) &&
              !flags[col].test( ColFlag::kLbUseless, ColFlag::kUbUseless,
@@ -96,7 +96,7 @@ extern template struct VariableDomains<Rational>;
 
 template <typename REAL>
 void
-VariableDomains<REAL>::compress( const Vec<int>& colmapping, bool full )
+VariableDomains<REAL>::compress( const Vec<int64_t>& colmapping, bool full )
 {
    tbb::parallel_invoke(
        [this, &colmapping, full]() {

@@ -42,8 +42,8 @@ namespace papilo
 /// struct to hold counters for up an downlocks of a column
 struct Locks
 {
-   int up;
-   int down;
+   int64_t up;
+   int64_t down;
 
    template <typename Archive>
    void
@@ -145,28 +145,28 @@ class Problem
    }
 
    /// returns number of active integral columns
-   int
+   int64_t
    getNumIntegralCols() const
    {
       return nintegers;
    }
 
    /// returns number of active integral columns
-   int&
+   int64_t&
    getNumIntegralCols()
    {
       return nintegers;
    }
 
    /// returns number of active continuous columns
-   int
+   int64_t
    getNumContinuousCols() const
    {
       return ncontinuous;
    }
 
    /// returns number of active continuous columns
-   int&
+   int64_t&
    getNumContinuousCols()
    {
       return ncontinuous;
@@ -323,28 +323,28 @@ class Problem
    }
 
    /// get the (dense) vector of column sizes
-   const Vec<int>&
+   const Vec<int64_t>&
    getColSizes() const
    {
       return constraintMatrix.getColSizes();
    }
 
    /// get the (dense) vector of column sizes
-   Vec<int>&
+   Vec<int64_t>&
    getColSizes()
    {
       return constraintMatrix.getColSizes();
    }
 
    /// get the (dense) vector of row sizes
-   const Vec<int>&
+   const Vec<int64_t>&
    getRowSizes() const
    {
       return constraintMatrix.getRowSizes();
    }
 
    /// get the (dense) vector of row sizes
-   Vec<int>&
+   Vec<int64_t>&
    getRowSizes()
    {
       return constraintMatrix.getRowSizes();
@@ -355,14 +355,14 @@ class Problem
    void
    fixInfiniteBounds( REAL inf )
    {
-      unsigned int numRows = getNRows();
+      int64_t numRows = getNRows();
       Vec<REAL> lhs = constraintMatrix.getLeftHandSides();
       Vec<REAL> rhs = constraintMatrix.getRightHandSides();
 
       assert( lhs.size() == numRows );
       assert( rhs.size() == numRows );
 
-      for( unsigned int i = 0; i < numRows; ++i )
+      for( int64_t i = 0; i < numRows; ++i )
       {
          if( lhs[i] <= -inf )
             constraintMatrix.modifyLeftHandSide<true>( 0 );
@@ -370,11 +370,11 @@ class Problem
             constraintMatrix.modifyRightHandSide<true>( 0 );
       }
 
-      unsigned int numCols = getNCols();
+      int64_t numCols = getNCols();
       assert( variableDomains.lower_bounds.size() == numCols );
       assert( variableDomains.upper_bounds.size() == numCols );
 
-      for( unsigned int i = 0; i < numCols; ++i )
+      for( int64_t i = 0; i < numCols; ++i )
       {
          if( variableDomains.lower_bounds[i] <= -inf )
             variableDomains.flags[i].set( ColFlag::kLbInf );
@@ -386,7 +386,7 @@ class Problem
    /// substitute a variable in the objective using an equality constraint
    /// given by a row index
    void
-   substituteVarInObj( const Num<REAL>& num, int col, int equalityrow );
+   substituteVarInObj( const Num<REAL>& num, int64_t col, int64_t equalityrow );
 
    bool
    computeSolViolations( const Num<REAL>& num, const Vec<REAL>& sol,
@@ -399,7 +399,7 @@ class Problem
       boundviolation = 0;
       intviolation = 0;
 
-      for( int i = 0; i != getNCols(); ++i )
+      for( int64_t i = 0; i != getNCols(); ++i )
       {
          if( !variableDomains.flags[i].test( ColFlag::kLbInf ) &&
              sol[i] < variableDomains.lower_bounds[i] )
@@ -451,14 +451,14 @@ class Problem
       const Vec<REAL>& lhs = constraintMatrix.getLeftHandSides();
       const Vec<REAL>& rhs = constraintMatrix.getRightHandSides();
 
-      for( int i = 0; i != getNRows(); ++i )
+      for( int64_t i = 0; i != getNRows(); ++i )
       {
          auto rowvec = constraintMatrix.getRowCoefficients( i );
          const REAL* vals = rowvec.getValues();
-         const int* inds = rowvec.getIndices();
+         const int64_t* inds = rowvec.getIndices();
 
          StableSum<REAL> activitySum;
-         for( int j = 0; j != rowvec.getLength(); ++j )
+         for( int64_t j = 0; j != rowvec.getLength(); ++j )
             activitySum.add( sol[inds[j]] * vals[j] );
 
          REAL activity = activitySum.get();
@@ -480,7 +480,7 @@ class Problem
       assert( sol.size() == getNCols() );
 
       StableSum<REAL> obj( objective.offset );
-      for( int i = 0; i != getNCols(); ++i )
+      for( int64_t i = 0; i != getNCols(); ++i )
          obj.add( sol[i] * objective.coefficients[i] );
 
       return obj.get();
@@ -516,10 +516,10 @@ class Problem
       return locks;
    }
 
-   std::pair<Vec<int>, Vec<int>>
+   std::pair<Vec<int64_t>, Vec<int64_t>>
    compress( bool full = false )
    {
-      std::pair<Vec<int>, Vec<int>> mappings =
+      std::pair<Vec<int64_t>, Vec<int64_t>> mappings =
           constraintMatrix.compress( full );
 
       // update information about columns that is stored by index
@@ -568,9 +568,9 @@ class Problem
       // loop through rows once, compute initial acitvities, detect trivial
       // redundancy
       tbb::parallel_for(
-          tbb::blocked_range<int>( 0, getNRows() ),
-          [this]( const tbb::blocked_range<int>& r ) {
-             for( int row = r.begin(); row != r.end(); ++row )
+          tbb::blocked_range<int64_t>( 0, getNRows() ),
+          [this]( const tbb::blocked_range<int64_t>& r ) {
+             for( int64_t row = r.begin(); row != r.end(); ++row )
              {
                 auto rowvec = constraintMatrix.getRowCoefficients( row );
                 rowActivities[row] = compute_row_activity(
@@ -589,18 +589,18 @@ class Problem
       // loop through rows once, compute initial acitvities, detect trivial
       // redundancy
       tbb::parallel_for(
-          tbb::blocked_range<int>( 0, getNCols() ),
-          [this]( const tbb::blocked_range<int>& c ) {
-             for( int col = c.begin(); col != c.end(); ++col )
+          tbb::blocked_range<int64_t>( 0, getNCols() ),
+          [this]( const tbb::blocked_range<int64_t>& c ) {
+             for( int64_t col = c.begin(); col != c.end(); ++col )
              {
                 auto colvec = constraintMatrix.getColumnCoefficients( col );
 
                 const REAL* vals = colvec.getValues();
-                const int* inds = colvec.getIndices();
-                int len = colvec.getLength();
+                const int64_t* inds = colvec.getIndices();
+                int64_t len = colvec.getLength();
                 const auto& rflags = getRowFlags();
 
-                for( int i = 0; i != len; ++i )
+                for( int64_t i = 0; i != len; ++i )
                    count_locks( vals[i], rflags[inds[i]], locks[col].down,
                                 locks[col].up );
              }
@@ -613,7 +613,7 @@ class Problem
    {
       REAL maxCoef{ 0 };
 
-      for( int i = 0; i != constraintMatrix.getNCols(); ++i )
+      for( int64_t i = 0; i != constraintMatrix.getNCols(); ++i )
          maxCoef = std::max(
              constraintMatrix.getColumnCoefficients( i ).getMaxAbsValue(),
              maxCoef );
@@ -627,17 +627,17 @@ class Problem
    {
       const Vec<REAL>& lhs = constraintMatrix.getLeftHandSides();
       const Vec<REAL>& rhs = constraintMatrix.getRightHandSides();
-      const Vec<int>& colsize = constraintMatrix.getColSizes();
+      const Vec<int64_t>& colsize = constraintMatrix.getColSizes();
       const Vec<RowFlags>& rflags = getRowFlags();
 
       const Vec<REAL>& lbs = getLowerBounds();
       const Vec<REAL>& ubs = getUpperBounds();
-      int nremoved = 0;
-      int nnewfreevars = 0;
+      int64_t nremoved = 0;
+      int64_t nnewfreevars = 0;
 
       Vec<std::tuple<int, REAL, int>> colperm( getNCols() );
 
-      for( int i = 0; i != getNCols(); ++i )
+      for( int64_t i = 0; i != getNCols(); ++i )
          colperm[i] = std::make_tuple(
              colsize[i],
              constraintMatrix.getColumnCoefficients( i ).getDynamism(), i );
@@ -646,18 +646,18 @@ class Problem
 
       for( const auto& tuple : colperm )
       {
-         int col = std::get<2>( tuple );
+         int64_t col = std::get<2>( tuple );
 
          if( cflags[col].test( ColFlag::kInactive ) ||
              !cflags[col].test( ColFlag::kUnbounded ) )
             continue;
 
          auto colvec = constraintMatrix.getColumnCoefficients( col );
-         const int* colrows = colvec.getIndices();
+         const int64_t* colrows = colvec.getIndices();
          const REAL* colvals = colvec.getValues();
-         const int collen = colvec.getLength();
+         const int64_t collen = colvec.getLength();
 
-         int k = 0;
+         int64_t k = 0;
 
          ColFlags colf = cflags[col];
 
@@ -665,7 +665,7 @@ class Problem
                   !colf.test( ColFlag::kUbInf ) ) &&
                 k != collen )
          {
-            int row = colrows[k];
+            int64_t row = colrows[k];
 
             if( rflags[row].test( RowFlag::kRedundant ) )
             {
@@ -690,7 +690,7 @@ class Problem
 
          if( colf.test( ColFlag::kLbInf ) && colf.test( ColFlag::kUbInf ) )
          {
-            int oldnremoved = nremoved;
+            int64_t oldnremoved = nremoved;
             if( !cflags[col].test( ColFlag::kLbInf ) )
             {
                update_activities_remove_finite_bound( colrows, colvals, collen,
@@ -743,8 +743,8 @@ class Problem
    Objective<REAL> objective;
    ConstraintMatrix<REAL> constraintMatrix;
    VariableDomains<REAL> variableDomains;
-   int ncontinuous;
-   int nintegers;
+   int64_t ncontinuous;
+   int64_t nintegers;
 
    Vec<String> variableNames;
    Vec<String> constraintNames;
@@ -758,7 +758,7 @@ class Problem
 
 template <typename REAL>
 void
-Problem<REAL>::substituteVarInObj( const Num<REAL>& num, int col, int row )
+Problem<REAL>::substituteVarInObj( const Num<REAL>& num, int64_t col, int64_t row )
 {
    auto& consMatrix = getConstraintMatrix();
    auto& objcoefficients = getObjective().coefficients;
@@ -768,11 +768,11 @@ Problem<REAL>::substituteVarInObj( const Num<REAL>& num, int col, int row )
       return;
 
    const auto equalityrow = consMatrix.getRowCoefficients( row );
-   const int length = equalityrow.getLength();
+   const int64_t length = equalityrow.getLength();
    const REAL* values = equalityrow.getValues();
-   const int* indices = equalityrow.getIndices();
+   const int64_t* indices = equalityrow.getIndices();
 
-   int consid = consMatrix.getSparseIndex( col, row );
+   int64_t consid = consMatrix.getSparseIndex( col, row );
    assert( consid >= 0 );
    assert( indices[consid] == col );
    REAL freevarCoefInCons = values[consid];
@@ -780,7 +780,7 @@ Problem<REAL>::substituteVarInObj( const Num<REAL>& num, int col, int row )
    REAL substscale = -freevarCoefInObj / freevarCoefInCons;
 
    objcoefficients[col] = REAL{ 0.0 };
-   for( int j = 0; j < length; ++j )
+   for( int64_t j = 0; j < length; ++j )
    {
       if( indices[j] == col )
          continue;

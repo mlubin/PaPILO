@@ -425,8 +425,8 @@ bell5()
        "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",  "f9",  "f10", "f11",
        "f12", "f13", "f14", "f16",
    };
-   int nCols = 104;
-   int nRows = 91;
+   int64_t nCols = 104;
+   int64_t nRows = 91;
    ProblemBuilder<double> pb;
    pb.reserve( 266, 91, 104 );
    pb.setNumRows( nRows );

@@ -45,31 +45,31 @@ TEST_CASE( "Parallel row detection", "[core]" )
 {
    double coef1[] = {1, 1, 1, 1, 1};
    double coef2[] = {2, 2, 2, 2, 2};
-   int id1[] = {1, 2, 3, 4, 5};
-   int id2[] = {1, 2, 3, 4, 5};
+   int64_t id1[] = {1, 2, 3, 4, 5};
+   int64_t id2[] = {1, 2, 3, 4, 5};
 
    double coef3[] = {1.5, -1.5, 1.5, 1.5, -1.5};
    double coef4[] = {-1, 1, -1, -1, 1};
-   int id3[] = {1, 2, 3, 4, 5};
-   int id4[] = {1, 2, 3, 4, 5};
+   int64_t id3[] = {1, 2, 3, 4, 5};
+   int64_t id4[] = {1, 2, 3, 4, 5};
 
    double coef5[] = {1, 1, 1, 1, 1};
-   int id5[] = {1, 2, 4, 6, 9};
+   int64_t id5[] = {1, 2, 4, 6, 9};
 
    double coef6[] = {1, 1, 1, -1, -1};
    double coef7[] = {2, 2, 2, -2, -2};
-   int id6[] = {1, 2, 4, 5, 6};
-   int id7[] = {1, 2, 4, 5, 6};
+   int64_t id6[] = {1, 2, 4, 5, 6};
+   int64_t id7[] = {1, 2, 4, 5, 6};
 
    double coef8[] = {1, 1, -1, -1, -1};
    double coef9[] = {1.0000001, 1, -1, -1, -1};
-   int id8[] = {1, 2, 4, 5, 6};
-   int id9[] = {1, 2, 4, 5, 6};
+   int64_t id8[] = {1, 2, 4, 5, 6};
+   int64_t id9[] = {1, 2, 4, 5, 6};
 
    const double* coefs[] = {coef1, coef2, coef3, coef4, coef5,
                             coef6, coef7, coef8, coef9};
-   const int* ids[] = {id1, id2, id3, id4, id5, id6, id7, id8, id9};
-   const int lens[] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
+   const int64_t* ids[] = {id1, id2, id3, id4, id5, id6, id7, id8, id9};
+   const int64_t lens[] = {5, 5, 5, 5, 5, 5, 5, 5, 5};
 
    double inf = infinity<double>();
    Vec<double> lhs_values{-1, -2, 0, -1, -1, -inf, -inf, -1, -3};
@@ -80,7 +80,7 @@ TEST_CASE( "Parallel row detection", "[core]" )
 
    // test lambda used in the presolver
    auto handlerows = [&reductions, &result, &lhs_values,
-                      &rhs_values]( int row1, int row2, double ratio ) {
+                      &rhs_values]( int64_t row1, int64_t row2, double ratio ) {
       bool firstconsEquality = ( rhs_values[row1] == lhs_values[row1] );
       bool secondconsEquality = ( rhs_values[row2] == lhs_values[row2] );
       assert( ratio != 0.0 );

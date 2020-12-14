@@ -39,7 +39,7 @@
 namespace papilo
 {
 
-template <typename T, int TWidth = sizeof( T )>
+template <typename T, int64_t TWidth = sizeof( T )>
 struct HashHelpers;
 
 template <typename T>
@@ -52,7 +52,7 @@ struct HashHelpers<T, 4>
    }
 
    static uint32_t
-   rotate_left( uint32_t x, int n )
+   rotate_left( uint32_t x, int64_t n )
    {
       return ( x << n ) | ( x >> ( 32 - n ) );
    }
@@ -68,7 +68,7 @@ struct HashHelpers<T, 8>
    }
 
    static uint64_t
-   rotate_left( uint64_t x, int n )
+   rotate_left( uint64_t x, int64_t n )
    {
       return ( x << n ) | ( x >> ( 64 - n ) );
    }

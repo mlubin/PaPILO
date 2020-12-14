@@ -80,7 +80,7 @@ ConstraintPropagation<REAL>::execute( const Problem<REAL>& problem,
                    num.getFeasTol() }
            : REAL{ 0 };
 
-   auto add_boundchange = [&]( BoundChange boundChange, int col, REAL val ) {
+   auto add_boundchange = [&]( BoundChange boundChange, int64_t col, REAL val ) {
       // do not accept huge values as bounds
       if( num.isHugeVal( val ) )
          return;
@@ -172,7 +172,7 @@ ConstraintPropagation<REAL>::execute( const Problem<REAL>& problem,
       }
    };
 
-   for( int row : changedactivities )
+   for( int64_t row : changedactivities )
    {
       auto rowvec = consMatrix.getRowCoefficients( row );
 

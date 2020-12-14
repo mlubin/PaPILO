@@ -38,10 +38,10 @@ checkHeapProperty( MatrixBuffer<double>& M )
    else
       fmt::print( "check col major heap property\n" );
 
-   for( int i = 1; i != M.entries.size(); ++i )
+   for( int64_t i = 1; i != M.entries.size(); ++i )
    {
-      int left = Node::left( M.entries[i] );
-      int right = Node::right( M.entries[i] );
+      int64_t left = Node::left( M.entries[i] );
+      int64_t right = Node::right( M.entries[i] );
 
       if( ( left != 0 && Node::priority( M.entries[i] ) <
                              Node::priority( M.entries[left] ) ) ||
@@ -65,10 +65,10 @@ checkBstProperty( MatrixBuffer<double>& M )
 {
    using Node = GetNodeProperty<StorageOrder>;
 
-   for( int i = 1; i != M.entries.size(); ++i )
+   for( int64_t i = 1; i != M.entries.size(); ++i )
    {
-      int left = Node::left( M.entries[i] );
-      int right = Node::right( M.entries[i] );
+      int64_t left = Node::left( M.entries[i] );
+      int64_t right = Node::right( M.entries[i] );
 
       if( left != 0 && Node::lesser( M.entries[i], M.entries[left] ) )
          return false;
@@ -139,7 +139,7 @@ TEST_CASE( "matrix-buffer", "[core]" )
    REQUIRE( checkBstProperty<true>( M ) );
    REQUIRE( checkBstProperty<false>( M ) );
 
-   int i = 1;
+   int64_t i = 1;
 
    while( it != M.end() )
    {

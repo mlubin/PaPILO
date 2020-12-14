@@ -78,15 +78,15 @@ DualFix<REAL>::execute( const Problem<REAL>& problem,
    const Vec<REAL>& objective = problem.getObjective().coefficients;
    const Vec<REAL>& lbs = problem.getLowerBounds();
    const Vec<REAL>& ubs = problem.getUpperBounds();
-   const int ncols = consMatrix.getNCols();
+   const int64_t ncols = consMatrix.getNCols();
    const Vec<RowFlags>& rflags = consMatrix.getRowFlags();
-   const Vec<int>& colsize = consMatrix.getColSizes();
+   const Vec<int64_t>& colsize = consMatrix.getColSizes();
    const Vec<REAL>& lhs = consMatrix.getLeftHandSides();
    const Vec<REAL>& rhs = consMatrix.getRightHandSides();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
-   for( int i = 0; i != ncols; ++i )
+   for( int64_t i = 0; i != ncols; ++i )
    {
       // skip inactive columns
       if( cflags[i].test( ColFlag::kInactive ) )
@@ -98,11 +98,11 @@ DualFix<REAL>::execute( const Problem<REAL>& problem,
          continue;
 
       auto colvec = consMatrix.getColumnCoefficients( i );
-      int collen = colvec.getLength();
+      int64_t collen = colvec.getLength();
       const REAL* values = colvec.getValues();
-      const int* rowinds = colvec.getIndices();
-      int nuplocks = 0;
-      int ndownlocks = 0;
+      const int64_t* rowinds = colvec.getIndices();
+      int64_t nuplocks = 0;
+      int64_t ndownlocks = 0;
 
       // count "lock" for objective function
       if( objective[i] < 0 )
@@ -110,7 +110,7 @@ DualFix<REAL>::execute( const Problem<REAL>& problem,
       else if( objective[i] > 0 )
          ++nuplocks;
 
-      for( int j = 0; j != collen; ++j )
+      for( int64_t j = 0; j != collen; ++j )
       {
          count_locks( values[j], rflags[rowinds[j]], ndownlocks, nuplocks );
 
@@ -177,7 +177,7 @@ DualFix<REAL>::execute( const Problem<REAL>& problem,
       {
          // Function checks if considered row allows dual bound strengthening
          // and calculates tightest bound for this row.
-         auto check_row = []( int ninf, REAL activity, const REAL& side,
+         auto check_row = []( int64_t ninf, REAL activity, const REAL& side,
                               const REAL& coeff, const REAL& boundval,
                               bool boundinf, bool& skip, REAL& cand_bound ) {
             switch( ninf )
@@ -214,9 +214,9 @@ DualFix<REAL>::execute( const Problem<REAL>& problem,
             REAL new_UB;
 
             // go through all rows with non-zero entry
-            for( int j = 0; j != collen; ++j )
+            for( int64_t j = 0; j != collen; ++j )
             {
-               int row = rowinds[j];
+               int64_t row = rowinds[j];
                // candidate for new upper bound
                REAL cand_bound;
 
@@ -320,9 +320,9 @@ DualFix<REAL>::execute( const Problem<REAL>& problem,
             REAL new_LB;
 
             // go through all rows with non-zero entry
-            for( int j = 0; j != collen; ++j )
+            for( int64_t j = 0; j != collen; ++j )
             {
-               int row = rowinds[j];
+               int64_t row = rowinds[j];
                // candidate for new lower bound
                REAL cand_bound;
 

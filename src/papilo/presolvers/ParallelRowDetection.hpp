@@ -42,13 +42,13 @@ class ParallelRowDetection : public PresolveMethod<REAL>
       SupportHashCompare() {}
 
       static size_t
-      hash( const std::pair<int, const int*>& row )
+      hash( const std::pair<int64_t, const int64_t*>& row )
       {
          Hasher<size_t> hasher( row.first );
 
-         const int* support = row.second;
+         const int64_t* support = row.second;
 
-         for( int i = 0; i != row.first; ++i )
+         for( int64_t i = 0; i != row.first; ++i )
          {
             hasher.addValue( support[i] );
          }
@@ -57,24 +57,24 @@ class ParallelRowDetection : public PresolveMethod<REAL>
       }
 
       static bool
-      equal( const std::pair<int, const int*>& row1,
-             const std::pair<int, const int*>& row2 )
+      equal( const std::pair<int, const int64_t*>& row1,
+             const std::pair<int, const int64_t*>& row2 )
       {
-         int length = row1.first;
+         int64_t length = row1.first;
 
          if( length != row2.first )
             return false;
 
          return memcmp( static_cast<const void*>( row1.second ),
                         static_cast<const void*>( row2.second ),
-                        length * sizeof( int ) ) == 0;
+                        length * sizeof( int64_t ) ) == 0;
       }
    };
 
    struct SupportHash
    {
       std::size_t
-      operator()( const std::pair<int, const int*>& row ) const
+      operator()( const std::pair<int64_t, const int64_t*>& row ) const
       {
          return SupportHashCompare::hash( row );
       }
@@ -83,15 +83,15 @@ class ParallelRowDetection : public PresolveMethod<REAL>
    struct SupportEqual
    {
       bool
-      operator()( const std::pair<int, const int*>& row1,
-                  const std::pair<int, const int*>& row2 ) const
+      operator()( const std::pair<int64_t, const int64_t*>& row1,
+                  const std::pair<int64_t, const int64_t*>& row2 ) const
       {
          return SupportHashCompare::equal( row1, row2 );
       }
    };
 
    void
-   findParallelRows( const Num<REAL>& num, const int* bucket, int bucketsize,
+   findParallelRows( const Num<REAL>& num, const int* bucket, int64_t bucketsize,
                      const ConstraintMatrix<REAL>& constMatrix,
                      Vec<std::tuple<int, int, REAL>>& parallelRows );
 
@@ -130,17 +130,17 @@ extern template class ParallelRowDetection<Rational>;
 template <typename REAL>
 void
 ParallelRowDetection<REAL>::findParallelRows(
-    const Num<REAL>& num, const int* bucket, int bucketsize,
+    const Num<REAL>& num, const int* bucket, int64_t bucketsize,
     const ConstraintMatrix<REAL>& constMatrix,
     Vec<std::tuple<int, int, REAL>>& parallelRows )
 {
    // TODO if bucketsize too large do gurobi trick
 
-   for( int i = 0; i < bucketsize; ++i )
+   for( int64_t i = 0; i < bucketsize; ++i )
    {
       auto row1 = constMatrix.getRowCoefficients( bucket[i] );
 
-      const int length = row1.getLength();
+      const int64_t length = row1.getLength();
       const REAL* coefs1 = row1.getValues();
 
       if( length < 2 )
@@ -148,7 +148,7 @@ ParallelRowDetection<REAL>::findParallelRows(
 
       // TODO handle case of multiple parallel rows with one transaction:
 
-      for( int j = i + 1; j < bucketsize; ++j )
+      for( int64_t j = i + 1; j < bucketsize; ++j )
       {
          auto row2 = constMatrix.getRowCoefficients( bucket[j] );
 
@@ -156,7 +156,7 @@ ParallelRowDetection<REAL>::findParallelRows(
          assert( length == row2.getLength() );
          assert( std::memcmp( static_cast<const void*>( row1.getIndices() ),
                               static_cast<const void*>( row2.getIndices() ),
-                              length * sizeof( int ) ) == 0 );
+                              length * sizeof( int64_t ) ) == 0 );
 
          const REAL* coefs2 = row2.getValues();
 
@@ -166,7 +166,7 @@ ParallelRowDetection<REAL>::findParallelRows(
          {
             REAL scale2 = coefs1[0] / coefs2[0];
 
-            for( int k = 1; k < length; ++k )
+            for( int64_t k = 1; k < length; ++k )
             {
                if( !num.isEq( coefs1[k], scale2 * coefs2[k] ) )
                {
@@ -185,7 +185,7 @@ ParallelRowDetection<REAL>::findParallelRows(
          {
             REAL scale1 = coefs2[0] / coefs1[0];
 
-            for( int k = 1; k < length; ++k )
+            for( int64_t k = 1; k < length; ++k )
             {
                if( !num.isEq( scale1 * coefs1[k], coefs2[k] ) )
                {
@@ -210,15 +210,15 @@ ParallelRowDetection<REAL>::computeRowHashes(
     const ConstraintMatrix<REAL>& constMatrix, unsigned int* rowhashes )
 {
    tbb::parallel_for(
-       tbb::blocked_range<int>( 0, constMatrix.getNRows() ),
-       [&]( const tbb::blocked_range<int>& r ) {
-          for( int i = r.begin(); i != r.end(); ++i )
+       tbb::blocked_range<int64_t>( 0, constMatrix.getNRows() ),
+       [&]( const tbb::blocked_range<int64_t>& r ) {
+          for( int64_t i = r.begin(); i != r.end(); ++i )
           {
              // compute hash-value for coefficients
 
              auto rowcoefs = constMatrix.getRowCoefficients( i );
              const REAL* rowvals = rowcoefs.getValues();
-             const int len = rowcoefs.getLength();
+             const int64_t len = rowcoefs.getLength();
 
              Hasher<unsigned int> hasher( len );
              // only makes sense for non-singleton rows
@@ -236,7 +236,7 @@ ParallelRowDetection<REAL>::computeRowHashes(
 
                 // add scaled coefficients of other row
                 // entries to compute the hash
-                for( int j = 1; j != len; ++j )
+                for( int64_t j = 1; j != len; ++j )
                 {
                    hasher.addValue( Num<REAL>::hashCode( rowvals[j] * scale ) );
                 }
@@ -253,16 +253,16 @@ ParallelRowDetection<REAL>::computeSupportId(
     const ConstraintMatrix<REAL>& constMatrix, unsigned int* supporthashes )
 {
    using SupportMap =
-       HashMap<std::pair<int, const int*>, int, SupportHash, SupportEqual>;
+       HashMap<std::pair<int64_t, const int64_t*>, int, SupportHash, SupportEqual>;
 
    SupportMap supportMap(
        static_cast<std::size_t>( constMatrix.getNRows() * 1.1 ) );
 
-   for( int i = 0; i < constMatrix.getNRows(); ++i )
+   for( int64_t i = 0; i < constMatrix.getNRows(); ++i )
    {
       auto row = constMatrix.getRowCoefficients( i );
-      int length = row.getLength();
-      const int* support = row.getIndices();
+      int64_t length = row.getLength();
+      const int64_t* support = row.getIndices();
 
       auto insResult =
           supportMap.emplace( std::make_pair( length, support ), i );
@@ -280,20 +280,20 @@ ParallelRowDetection<REAL>::computeSupportIdParallel(
     const ConstraintMatrix<REAL>& constMatrix, unsigned int* supportid )
 {
    using SupportMap =
-       tbb::concurrent_hash_map<std::pair<int, const int*>, unsigned int,
+       tbb::concurrent_hash_map<std::pair<int64_t, const int64_t*>, unsigned int,
                                 SupportHashCompare>;
 
    SupportMap supportMap( constMatrix.getNRows() * 2 );
 
    tbb::parallel_for(
-       tbb::blocked_range<int>( 0, constMatrix.getNRows() ),
-       [&]( const tbb::blocked_range<int>& r ) {
-          for( int i = r.begin(); i != r.end(); ++i )
+       tbb::blocked_range<int64_t>( 0, constMatrix.getNRows() ),
+       [&]( const tbb::blocked_range<int64_t>& r ) {
+          for( int64_t i = r.begin(); i != r.end(); ++i )
           {
              unsigned int thissupportid;
              auto row = constMatrix.getRowCoefficients( i );
-             int length = row.getLength();
-             const int* support = row.getIndices();
+             int64_t length = row.getLength();
+             const int64_t* support = row.getIndices();
 
              {
                 typename SupportMap::const_accessor a;
@@ -323,8 +323,8 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
    const auto& lhs_values = constMatrix.getLeftHandSides();
    const auto& rhs_values = constMatrix.getRightHandSides();
    const auto& rflags = constMatrix.getRowFlags();
-   const int nrows = constMatrix.getNRows();
-   const Vec<int>& rowperm = problemUpdate.getRandomRowPerm();
+   const int64_t nrows = constMatrix.getNRows();
+   const Vec<int64_t>& rowperm = problemUpdate.getRandomRowPerm();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
@@ -334,7 +334,7 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
 
    // lambda to handle the parallel rows
    auto handlerows = [&reductions, &result, &lhs_values, &rhs_values, &rflags,
-                      &num]( int row1, int row2, REAL ratio ) {
+                      &num]( int64_t row1, int64_t row2, REAL ratio ) {
       bool firstconsEquality = rflags[row1].test( RowFlag::kEquation );
       bool secondconsEquality = rflags[row2].test( RowFlag::kEquation );
 
@@ -456,7 +456,7 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
 #if 0
       tbb::parallel_invoke(
           [nrows, &row]() {
-             for( int i = 0; i < nrows; ++i )
+             for( int64_t i = 0; i < nrows; ++i )
                 row[i] = i;
           },
           [&constMatrix, &coefhash, this]() {
@@ -469,7 +469,7 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
 
    tbb::parallel_invoke(
        [nrows, &row]() {
-          for( int i = 0; i < nrows; ++i )
+          for( int64_t i = 0; i < nrows; ++i )
              row[i] = i;
        },
        [&constMatrix, &coefhash, this]() {
@@ -480,7 +480,7 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
        } );
 #endif
 
-   pdqsort( row.get(), row.get() + nrows, [&]( int a, int b ) {
+   pdqsort( row.get(), row.get() + nrows, [&]( int64_t a, int64_t b ) {
       return supportid[a] < supportid[b] ||
              ( supportid[a] == supportid[b] && coefhash[a] < coefhash[b] ) ||
              ( supportid[a] == supportid[b] && coefhash[a] == coefhash[b] &&
@@ -489,17 +489,17 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
 
    Vec<std::tuple<int, int, REAL>> parallelRows;
 
-   for( int i = 0; i < nrows; )
+   for( int64_t i = 0; i < nrows; )
    {
       // determine size of bucket
-      int j;
+      int64_t j;
       for( j = i + 1; j < nrows; ++j )
       {
          if( coefhash[row[i]] != coefhash[row[j]] ||
              supportid[row[i]] != supportid[row[j]] )
             break;
       }
-      int len = j - i;
+      int64_t len = j - i;
 
       // if more  than one row is in the bucket try to find parallel rows
       if( len > 1 )
@@ -528,8 +528,8 @@ ParallelRowDetection<REAL>::execute( const Problem<REAL>& problem,
 
       for( const std::tuple<int, int, REAL>& parallelRow : parallelRows )
       {
-         int row1;
-         int row2;
+         int64_t row1;
+         int64_t row2;
          REAL ratio;
 
          std::tie( row1, row2, ratio ) = parallelRow;

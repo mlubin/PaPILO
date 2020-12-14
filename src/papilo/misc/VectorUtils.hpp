@@ -69,7 +69,7 @@ compareColBounds( const Vec<REAL>& first_values, const Vec<REAL>& second_values,
                   const Vec<ColFlags>& first_flags,
                   const Vec<ColFlags>& second_flags, const Num<REAL>& num )
 {
-   int size = first_values.size();
+   int64_t size = first_values.size();
    if( size != first_flags.size() )
       return false;
    if( size != second_values.size() )
@@ -77,7 +77,7 @@ compareColBounds( const Vec<REAL>& first_values, const Vec<REAL>& second_values,
    if( size != second_flags.size() )
       return false;
 
-   for( int i = 0; i < size; i++ )
+   for( int64_t i = 0; i < size; i++ )
    {
       if( ( first_flags[i].test( ColFlag::kLbInf ) &&
             second_flags[i].test( ColFlag::kLbInf ) ) ||
@@ -98,7 +98,7 @@ compareRowBounds( const Vec<REAL>& first_values, const Vec<REAL>& second_values,
                   const Vec<RowFlags>& first_flags,
                   const Vec<RowFlags>& second_flags, const Num<REAL>& num )
 {
-   int size = first_values.size();
+   int64_t size = first_values.size();
    if( size != first_flags.size() )
       return false;
    if( size != second_values.size() )
@@ -106,7 +106,7 @@ compareRowBounds( const Vec<REAL>& first_values, const Vec<REAL>& second_values,
    if( size != second_flags.size() )
       return false;
 
-   for( int i = 0; i < size; i++ )
+   for( int64_t i = 0; i < size; i++ )
    {
       if( ( first_flags[i].test( RowFlag::kLhsInf ) &&
             second_flags[i].test( RowFlag::kLhsInf ) ) ||
@@ -193,10 +193,10 @@ compareProblems( const Problem<REAL>& first, const Problem<REAL>& second,
                  const Num<REAL>& num )
 {
    // ncols, nrows
-   int nRows1 = first.getNRows();
-   int nRows2 = second.getNRows();
-   const int nCols1 = first.getNCols();
-   const int nCols2 = second.getNCols();
+   int64_t nRows1 = first.getNRows();
+   int64_t nRows2 = second.getNRows();
+   const int64_t nCols1 = first.getNCols();
+   const int64_t nCols2 = second.getNCols();
 
    if( nRows1 != nRows2 )
       return false;

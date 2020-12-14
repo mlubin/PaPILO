@@ -62,12 +62,12 @@ class SolverInterface
    SolverInterface() : status( SolverStatus::kInit ) {}
 
    virtual void
-   setUp( const Problem<REAL>& prob, const Vec<int>& row_maps,
-          const Vec<int>& col_maps ) = 0;
+   setUp( const Problem<REAL>& prob, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps ) = 0;
 
    virtual void
-   setUp( const Problem<REAL>& prob, const Vec<int>& row_maps,
-          const Vec<int>& col_maps, const Components& components,
+   setUp( const Problem<REAL>& prob, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps, const Components& components,
           const ComponentInfo& component ) = 0;
 
    virtual void
@@ -120,7 +120,7 @@ class SolverInterface
    getSolution( Solution<REAL>& sol ) = 0;
 
    virtual bool
-   getSolution( const Components& components, int component,
+   getSolution( const Components& components, int64_t component,
                 Solution<REAL>& sol ) = 0;
 
    virtual REAL

@@ -73,11 +73,11 @@ class provides_numerator_and_denominator_overloads
 
    template <typename T2>
    static decltype( numerator( std::declval<T2>() ) )
-   test_numerator( int );
+   test_numerator( int64_t );
 
    template <typename T2>
    static decltype( numerator( std::declval<T2>() ) )
-   test_denominator( int );
+   test_denominator( int64_t );
 
    template <typename T2>
    static no

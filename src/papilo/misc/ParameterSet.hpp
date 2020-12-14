@@ -345,8 +345,8 @@ class ParameterSet
 
    void
    addParameter( const char* key, const char* description, std::int64_t& val,
-                 std::int64_t min = std::numeric_limits<std::int64_t>::min(),
-                 std::int64_t max = std::numeric_limits<std::int64_t>::max() )
+                 int64_t min = std::numeric_limits<int64_t>::min(),
+                 int64_t max = std::numeric_limits<int64_t>::max() )
    {
       if( parameters.count( key ) != 0 )
          throw std::invalid_argument(
@@ -354,7 +354,7 @@ class ParameterSet
 
       parameters.emplace(
           key, Parameter{ description,
-                          NumericalOption<std::int64_t>{ &val, min, max } } );
+                          NumericalOption<int64_t>{ &val, min, max } } );
    }
 
    void

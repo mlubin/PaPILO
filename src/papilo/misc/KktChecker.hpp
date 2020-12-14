@@ -105,8 +105,8 @@ class KktState
          colUpper( problem.getVariableDomains().upper_bounds ),
          level( checker_level )
    {
-      const int nRows = problem.getNRows();
-      const int nCols = problem.getNCols();
+      const int64_t nRows = problem.getNRows();
+      const int64_t nCols = problem.getNCols();
 
       // We can have a problem with no rows and columns.
       if( nRows == 0 && nCols == 0 )
@@ -136,8 +136,8 @@ class KktState
          rowUpper( rowUpper_ ), colLower( colLower_ ), colUpper( colUpper_ ),
          level( checker_level )
    {
-      const int nRows = problem.getNRows();
-      const int nCols = problem.getNCols();
+      const int64_t nRows = problem.getNRows();
+      const int64_t nCols = problem.getNCols();
 
       // We can have a problem with no rows and columns.
       if( nRows == 0 && nCols == 0 )
@@ -167,8 +167,8 @@ class KktState
    checkPrimalBounds()
    {
       kkt_status status = kkt_status::OK;
-      int reduced_index = 0;
-      for( unsigned int col = 0; col < solSetCol.size(); col++ )
+      int64_t reduced_index = 0;
+      for( int64_t col = 0; col < solSetCol.size(); col++ )
       {
          if( !solSetCol[col] )
             continue;
@@ -195,13 +195,13 @@ class KktState
    kkt_status
    checkLength()
    {
-      const int nCols = solSetCol.size();
+      const int64_t nCols = solSetCol.size();
 
       if( colLower.size() != nCols || colUpper.size() != nCols ||
           colValues.size() != nCols || colDuals.size() != nCols )
          return kkt_status::Fail_Length;
 
-      const int nRows = solSetRow.size();
+      const int64_t nRows = solSetRow.size();
 
       if( rowLower.size() != nRows || rowUpper.size() != nRows ||
           rowValues.size() != nRows || rowDuals.size() != nRows )
@@ -220,8 +220,8 @@ class KktState
       if( status != kkt_status::OK )
          return status;
 
-      int reduced_index = 0;
-      for( int row = 0; row < solSetRow.size(); row++ )
+      int64_t reduced_index = 0;
+      for( int64_t row = 0; row < solSetRow.size(); row++ )
       {
          if( !solSetRow[row] )
             continue;
@@ -250,8 +250,8 @@ class KktState
       const Vec<REAL>& colUpper = problem.getVariableDomains().upper_bounds;
 
       // check values of z_j are dual feasible
-      int reduced_index = 0;
-      for( int col = 0; col < solSetCol.size(); col++ )
+      int64_t reduced_index = 0;
+      for( int64_t col = 0; col < solSetCol.size(); col++ )
       {
          if( !solSetCol[col] )
             continue;
@@ -287,8 +287,8 @@ class KktState
           problem.getConstraintMatrix().getRightHandSides();
 
       std::vector<int> orig_col_index( matrixRW.getNCols(), 0 );
-      int reduced_col_index = 0;
-      for( int col = 0; col < solSetCol.size(); col++ )
+      int64_t reduced_col_index = 0;
+      for( int64_t col = 0; col < solSetCol.size(); col++ )
       {
          if( !solSetCol[col] )
             continue;
@@ -298,7 +298,7 @@ class KktState
 
       assert( matrixRW.getNCols() == reduced_col_index );
 
-      for( int row = 0; row < solSetRow.size(); row++ )
+      for( int64_t row = 0; row < solSetRow.size(); row++ )
       {
          if( !solSetRow[row] )
             continue;
@@ -336,8 +336,8 @@ class KktState
    kkt_status
    checkComplementarySlackness()
    {
-      int reduced_index = 0;
-      for( int col = 0; col < solSetCol.size(); col++ )
+      int64_t reduced_index = 0;
+      for( int64_t col = 0; col < solSetCol.size(); col++ )
       {
          if( !solSetCol[col] )
             continue;
@@ -375,8 +375,8 @@ class KktState
       //    problem.getConstraintMatrix().getConstraintMatrix().getTranspose();
 
       std::vector<int> orig_row_index( matrixCW.getNCols(), 0 );
-      int reduced_row_index = 0;
-      for( int row = 0; row < solSetRow.size(); row++ )
+      int64_t reduced_row_index = 0;
+      for( int64_t row = 0; row < solSetRow.size(); row++ )
       {
          if( !solSetRow[row] )
             continue;
@@ -387,8 +387,8 @@ class KktState
       // Below is used getNCols() because matrixCW is the transpose.
       assert( matrixCW.getNCols() == reduced_row_index );
 
-      int reduced_index = 0;
-      for( int col = 0; col < solSetCol.size(); col++ )
+      int64_t reduced_index = 0;
+      for( int64_t col = 0; col < solSetCol.size(); col++ )
       {
          if( !solSetCol[col] )
             continue;
@@ -396,9 +396,9 @@ class KktState
          lagrV = 0;
 
          auto index_range = matrixCW.getRowRanges()[reduced_index];
-         for( int k = index_range.start; k < index_range.end; k++ )
+         for( int64_t k = index_range.start; k < index_range.end; k++ )
          {
-            int row = matrixCW.getColumns()[k];
+            int64_t row = matrixCW.getColumns()[k];
             lagrV += rowDuals[orig_row_index[row]] * matrixCW.getValues()[k];
          }
 
@@ -416,31 +416,31 @@ class KktState
    void
    getRowValues()
    {
-      const int nRows = problem.getNRows();
-      const int nCols = problem.getNCols();
+      const int64_t nRows = problem.getNRows();
+      const int64_t nCols = problem.getNCols();
       rowValues.resize( solSetRow.size() );
       REAL rowValue;
 
-      int reduced_row_index = 0;
+      int64_t reduced_row_index = 0;
       auto values = matrixRW.getValues();
 
       std::vector<int> orig_col_index;
       orig_col_index.reserve( nCols );
-      for( int i = 0; i < solSetCol.size(); i++ )
+      for( int64_t i = 0; i < solSetCol.size(); i++ )
          if( solSetCol[i] )
             orig_col_index.push_back( i );
       assert( orig_col_index.size() == nCols );
 
-      for( int i = 0; i < solSetRow.size(); i++ )
+      for( int64_t i = 0; i < solSetRow.size(); i++ )
       {
          if( !solSetRow[i] )
             continue;
 
          rowValue = 0;
          auto index_range = matrixRW.getRowRanges()[reduced_row_index];
-         for( int j = index_range.start; j < index_range.end; j++ )
+         for( int64_t j = index_range.start; j < index_range.end; j++ )
          {
-            int col = matrixRW.getColumns()[j];
+            int64_t col = matrixRW.getColumns()[j];
             assert( col >= 0 );
             assert( col < (int)nCols );
 
@@ -491,7 +491,7 @@ class KktChecker<REAL, CheckLevel::No_check>
 
    State
    initState( ProblemType type, Solution<REAL>& solution,
-              const Vec<int>& origcol_map, const Vec<int>& origrow_map,
+              const Vec<int64_t>& origcol_map, const Vec<int64_t>& origrow_map,
               CheckLevel checker_level )
    {
       return 0;
@@ -533,8 +533,8 @@ class KktChecker<REAL, CheckLevel::No_check>
    }
 
    void
-   addRowToProblem( const int row, const int length, const REAL* values,
-                    const int* coeffs, const REAL lhs, const REAL rhs,
+   addRowToProblem( const int64_t row, const int64_t length, const REAL* values,
+                    const int64_t* coeffs, const REAL lhs, const REAL rhs,
                     const bool lb_inf, const bool ub_inf )
    {
    }
@@ -562,8 +562,8 @@ class KktChecker<REAL, CheckLevel::Check>
    initState( ProblemType type, Solution<REAL>& solution,
               CheckLevel checker_level )
    {
-      int ncols = original_problem.getNCols();
-      int nrows = original_problem.getNRows();
+      int64_t ncols = original_problem.getNCols();
+      int64_t nrows = original_problem.getNRows();
       Vec<uint8_t> solSetColumns( ncols, 1 );
       Vec<uint8_t> solSetRows( nrows, 1 );
 
@@ -573,23 +573,23 @@ class KktChecker<REAL, CheckLevel::Check>
 
    State
    initState( ProblemType type, Solution<REAL>& solution,
-              const Vec<int>& origcol_map, const Vec<int>& origrow_map,
+              const Vec<int64_t>& origcol_map, const Vec<int64_t>& origrow_map,
               CheckLevel checker_level )
    {
-      int ncols = original_problem.getNCols();
-      int nrows = original_problem.getNRows();
+      int64_t ncols = original_problem.getNCols();
+      int64_t nrows = original_problem.getNRows();
       Vec<uint8_t> solSetColumns( ncols, 0 );
       Vec<uint8_t> solSetRows( nrows, 0 );
 
-      for( int k = 0; k < origcol_map.size(); ++k )
+      for( int64_t k = 0; k < origcol_map.size(); ++k )
       {
-         int origcol = origcol_map[k];
+         int64_t origcol = origcol_map[k];
          solSetCol[origcol] = true;
       }
 
-      for( int k = 0; k < origrow_map.size(); ++k )
+      for( int64_t k = 0; k < origrow_map.size(); ++k )
       {
-         int origrow = origrow_map[k];
+         int64_t origrow = origrow_map[k];
          solSetRow[origrow] = true;
       }
 
@@ -633,8 +633,8 @@ class KktChecker<REAL, CheckLevel::Check>
 
       // if problem type is REDUCED expand row / column bound vectors since
       // original_solution is already padded.
-      const int nRows = reduced_problem.getNRows();
-      const int nCols = reduced_problem.getNCols();
+      const int64_t nRows = reduced_problem.getNRows();
+      const int64_t nCols = reduced_problem.getNCols();
 
       if( solSetRows.size() > nRows )
       {
@@ -651,8 +651,8 @@ class KktChecker<REAL, CheckLevel::Check>
          rowUpper_reduced.resize( solSetRows.size(), 0 );
          rowLower_reduced.resize( solSetRows.size(), 0 );
 
-         int index = 0;
-         for( int k = 0; k < solSetRows.size(); ++k )
+         int64_t index = 0;
+         for( int64_t k = 0; k < solSetRows.size(); ++k )
          {
             if( solSetRows[k] )
             {
@@ -686,8 +686,8 @@ class KktChecker<REAL, CheckLevel::Check>
          colUpper_reduced.resize( solSetColumns.size(), 0 );
          colLower_reduced.resize( solSetColumns.size(), 0 );
 
-         int index = 0;
-         for( int k = 0; k < solSetColumns.size(); ++k )
+         int64_t index = 0;
+         for( int64_t k = 0; k < solSetColumns.size(); ++k )
          {
             if( solSetColumns[k] )
             {
@@ -818,8 +818,8 @@ class KktChecker<REAL, CheckLevel::Check>
    }
 
    void
-   addRowToProblem( const int row, const int length, const REAL* values,
-                    const int* coeffs, const REAL lhs, const REAL rhs,
+   addRowToProblem( const int64_t row, const int64_t length, const REAL* values,
+                    const int64_t* coeffs, const REAL lhs, const REAL rhs,
                     const bool lb_inf, const bool ub_inf )
    {
       addRow( problem, row, length, values, coeffs, lhs, rhs, lb_inf, ub_inf );
@@ -841,28 +841,28 @@ class KktChecker<REAL, CheckLevel::Check>
 
 template <typename REAL>
 bool
-rowLHSInf( const Problem<REAL>& problem, const int row )
+rowLHSInf( const Problem<REAL>& problem, const int64_t row )
 {
    return problem.getRowFlags()[row].test( RowFlag::kLhsInf );
 }
 
 template <typename REAL>
 bool
-rowRHSInf( const Problem<REAL>& problem, const int row )
+rowRHSInf( const Problem<REAL>& problem, const int64_t row )
 {
    return problem.getRowFlags()[row].test( RowFlag::kRhsInf );
 }
 
 template <typename REAL>
 bool
-colLBInf( const Problem<REAL>& problem, const int col )
+colLBInf( const Problem<REAL>& problem, const int64_t col )
 {
    return problem.getColFlags()[col].test( ColFlag::kLbInf );
 }
 
 template <typename REAL>
 bool
-colUBInf( const Problem<REAL>& problem, const int col )
+colUBInf( const Problem<REAL>& problem, const int64_t col )
 {
    return problem.getColFlags()[col].test( ColFlag::kUbInf );
 }

@@ -59,25 +59,25 @@ class DominatedCols : public PresolveMethod<REAL>
    {
       Signature32 pos;
       Signature32 neg;
-      int lbfree = 0;
-      int ubfree = 0;
+      int64_t lbfree = 0;
+      int64_t ubfree = 0;
 
       Signature32
-      getNegSignature( int scale ) const
+      getNegSignature( int64_t scale ) const
       {
          assert( scale == 1 || scale == -1 );
          return scale == 1 ? neg : pos;
       }
 
       Signature32
-      getPosSignature( int scale ) const
+      getPosSignature( int64_t scale ) const
       {
          assert( scale == 1 || scale == -1 );
          return scale == 1 ? pos : neg;
       }
 
       bool
-      allowsDomination( int scale, const ColInfo& other, int otherscale ) const
+      allowsDomination( int64_t scale, const ColInfo& other, int64_t otherscale ) const
       {
          return getNegSignature( scale ).isSuperset(
                     other.getNegSignature( otherscale ) ) &&
@@ -88,9 +88,9 @@ class DominatedCols : public PresolveMethod<REAL>
 
    struct DomcolReduction
    {
-      int col1;
-      int col2;
-      int implrowlock;
+      int64_t col1;
+      int64_t col2;
+      int64_t implrowlock;
       BoundChange boundchg;
    };
 
@@ -124,8 +124,8 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
    const auto& activities = problem.getRowActivities();
    const auto& rowsize = consMatrix.getRowSizes();
    const auto& colsize = consMatrix.getColSizes();
-   const int ncols = problem.getNCols();
-   const int nrows = problem.getNRows();
+   const int64_t ncols = problem.getNCols();
+   const int64_t nrows = problem.getNRows();
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
@@ -140,13 +140,13 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
    // compute signatures and implied bound information of all columns in
    // parallel
    tbb::parallel_for(
-       tbb::blocked_range<int>( 0, ncols ),
-       [&]( const tbb::blocked_range<int>& r ) {
-          for( int col = r.begin(); col != r.end(); ++col )
+       tbb::blocked_range<int64_t>( 0, ncols ),
+       [&]( const tbb::blocked_range<int64_t>& r ) {
+          for( int64_t col = r.begin(); col != r.end(); ++col )
           {
              auto colvec = consMatrix.getColumnCoefficients( col );
-             int collen = colvec.getLength();
-             const int* colrows = colvec.getIndices();
+             int64_t collen = colvec.getLength();
+             const int64_t* colrows = colvec.getIndices();
              const REAL* colvals = colvec.getValues();
 
              if( cflags[col].test( ColFlag::kLbInf ) )
@@ -154,9 +154,9 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
              if( cflags[col].test( ColFlag::kUbInf ) )
                 colinfo[col].ubfree = -1;
 
-             for( int j = 0; j != collen; ++j )
+             for( int64_t j = 0; j != collen; ++j )
              {
-                int row = colrows[j];
+                int64_t row = colrows[j];
                 if( colinfo[col].ubfree == 0 &&
                     row_implies_UB( num, lhsValues[row], rhsValues[row],
                                     rflags[row], activities[row], colvals[j],
@@ -204,7 +204,7 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
           }
        } );
 
-   auto checkDominance = [&]( int col1, int col2, int scal1, int scal2 ) {
+   auto checkDominance = [&]( int64_t col1, int64_t col2, int64_t scal1, int64_t scal2 ) {
       assert( !cflags[col1].test( ColFlag::kIntegral ) ||
               cflags[col2].test( ColFlag::kIntegral ) );
 
@@ -213,17 +213,17 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
          return false;
 
       auto col1vec = consMatrix.getColumnCoefficients( col1 );
-      int col1len = col1vec.getLength();
-      const int* col1rows = col1vec.getIndices();
+      int64_t col1len = col1vec.getLength();
+      const int64_t* col1rows = col1vec.getIndices();
       const REAL* col1vals = col1vec.getValues();
 
       auto col2vec = consMatrix.getColumnCoefficients( col2 );
-      int col2len = col2vec.getLength();
-      const int* col2rows = col2vec.getIndices();
+      int64_t col2len = col2vec.getLength();
+      const int64_t* col2rows = col2vec.getIndices();
       const REAL* col2vals = col2vec.getValues();
 
-      int i = 0;
-      int j = 0;
+      int64_t i = 0;
+      int64_t j = 0;
 
       while( i != col1len && j != col2len )
       {
@@ -337,25 +337,25 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
    tbb::concurrent_vector<DomcolReduction> domcolreductions;
 
    // scan unbounded columns if they dominate other columns
-   // for( int i : unboundedcols ) // = 0; i != ncols; ++i )
+   // for( int64_t i : unboundedcols ) // = 0; i != ncols; ++i )
    tbb::parallel_for(
-       tbb::blocked_range<int>( 0, unboundedcols.size() ),
-       [&]( const tbb::blocked_range<int>& r ) {
-          for( int k = r.begin(); k != r.end(); ++k )
+       tbb::blocked_range<int64_t>( 0, unboundedcols.size() ),
+       [&]( const tbb::blocked_range<int64_t>& r ) {
+          for( int64_t k = r.begin(); k != r.end(); ++k )
           {
-             int i = unboundedcols[k];
-             int lbfree = colinfo[i].lbfree;
-             int ubfree = colinfo[i].ubfree;
+             int64_t i = unboundedcols[k];
+             int64_t lbfree = colinfo[i].lbfree;
+             int64_t ubfree = colinfo[i].ubfree;
 
              if( lbfree == 0 && ubfree == 0 )
                 continue;
 
              auto colvec = consMatrix.getColumnCoefficients( i );
-             int collen = colvec.getLength();
-             const int* colrows = colvec.getIndices();
+             int64_t collen = colvec.getLength();
+             const int64_t* colrows = colvec.getIndices();
              const REAL* colvals = colvec.getValues();
-             int scale;
-             int implrowlock;
+             int64_t scale;
+             int64_t implrowlock;
 
              // determine the scale of the dominating column depending on
              // whether the upper or lower bound is free, and remember which
@@ -373,12 +373,12 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
              else
                 continue;
 
-             int bestrow = -1;
-             int bestrowsize = std::numeric_limits<int>::max();
+             int64_t bestrow = -1;
+             int64_t bestrowsize = std::numeric_limits<int>::max();
 
-             for( int j = 0; j != collen; ++j )
+             for( int64_t j = 0; j != collen; ++j )
              {
-                int row = colrows[j];
+                int64_t row = colrows[j];
                 if( ( !rflags[row].test( RowFlag::kLhsInf, RowFlag::kRhsInf ) ||
                       ( !rflags[row].test( RowFlag::kRhsInf ) &&
                         scale * colvals[j] > 0 ) ||
@@ -399,13 +399,13 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
              REAL colval = colvals[bestrow] * scale;
              REAL colobj = obj[i] * scale;
              bestrow = colrows[bestrow];
-             int rowlen = candrowvec.getLength();
-             const int* rowcols = candrowvec.getIndices();
+             int64_t rowlen = candrowvec.getLength();
+             const int64_t* rowcols = candrowvec.getIndices();
              const REAL* rowvals = candrowvec.getValues();
 
-             for( int j = 0; j != rowlen; ++j )
+             for( int64_t j = 0; j != rowlen; ++j )
              {
-                int col = rowcols[j];
+                int64_t col = rowcols[j];
                 if( col == i || ( cflags[i].test( ColFlag::kIntegral ) &&
                                   !cflags[col].test( ColFlag::kIntegral ) ) )
                    continue;
@@ -474,7 +474,7 @@ DominatedCols<REAL>::execute( const Problem<REAL>& problem,
    if( !domcolreductions.empty() )
    {
       result = PresolveStatus::kReduced;
-      const Vec<int>& colperm = problemUpdate.getRandomColPerm();
+      const Vec<int64_t>& colperm = problemUpdate.getRandomColPerm();
 
       pdqsort(
           domcolreductions.begin(), domcolreductions.end(),

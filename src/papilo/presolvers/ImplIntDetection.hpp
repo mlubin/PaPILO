@@ -80,7 +80,7 @@ ImplIntDetection<REAL>::execute( const Problem<REAL>& problem,
 
    PresolveStatus result = PresolveStatus::kUnchanged;
 
-   for( int col = 0; col != ncols; ++col )
+   for( int64_t col = 0; col != ncols; ++col )
    {
       if( cflags[col].test( ColFlag::kIntegral, ColFlag::kImplInt,
                             ColFlag::kInactive ) )
@@ -91,13 +91,13 @@ ImplIntDetection<REAL>::execute( const Problem<REAL>& problem,
       bool impliedint = false;
 
       auto colvec = consmatrix.getColumnCoefficients( col );
-      int collen = colvec.getLength();
-      const int* colrows = colvec.getIndices();
+      int64_t collen = colvec.getLength();
+      const int64_t* colrows = colvec.getIndices();
       const REAL* colvals = colvec.getValues();
 
-      for( int i = 0; i != collen; ++i )
+      for( int64_t i = 0; i != collen; ++i )
       {
-         int row = colrows[i];
+         int64_t row = colrows[i];
 
          if( rflags[row].test( RowFlag::kRedundant ) ||
              !rflags[row].test( RowFlag::kEquation ) )
@@ -109,15 +109,15 @@ ImplIntDetection<REAL>::execute( const Problem<REAL>& problem,
             continue;
 
          auto rowvec = consmatrix.getRowCoefficients( row );
-         int rowlen = rowvec.getLength();
-         const int* rowcols = rowvec.getIndices();
+         int64_t rowlen = rowvec.getLength();
+         const int64_t* rowcols = rowvec.getIndices();
          const REAL* rowvals = rowvec.getValues();
 
          impliedint = true;
 
-         for( int j = 0; j != rowlen; ++j )
+         for( int64_t j = 0; j != rowlen; ++j )
          {
-            int rowcol = rowcols[j];
+            int64_t rowcol = rowcols[j];
 
             if( rowcol == col )
                continue;
@@ -155,9 +155,9 @@ ImplIntDetection<REAL>::execute( const Problem<REAL>& problem,
 
       impliedint = true;
 
-      for( int i = 0; i != collen; ++i )
+      for( int64_t i = 0; i != collen; ++i )
       {
-         int row = colrows[i];
+         int64_t row = colrows[i];
 
          if( rflags[row].test( RowFlag::kRedundant ) )
             continue;
@@ -179,13 +179,13 @@ ImplIntDetection<REAL>::execute( const Problem<REAL>& problem,
          }
 
          auto rowvec = consmatrix.getRowCoefficients( row );
-         int rowlen = rowvec.getLength();
-         const int* rowcols = rowvec.getIndices();
+         int64_t rowlen = rowvec.getLength();
+         const int64_t* rowcols = rowvec.getIndices();
          const REAL* rowvals = rowvec.getValues();
 
-         for( int j = 0; j != rowlen; ++j )
+         for( int64_t j = 0; j != rowlen; ++j )
          {
-            int rowcol = rowcols[j];
+            int64_t rowcol = rowcols[j];
 
             if( rowcol == col )
                continue;

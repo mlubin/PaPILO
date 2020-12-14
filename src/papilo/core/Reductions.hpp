@@ -73,12 +73,12 @@ struct Reduction
    REAL newval;
 
    /// index of row or negative for column specific operations
-   int row;
+   int64_t row;
 
    /// index of column or negative for row specific operations
-   int col;
+   int64_t col;
 
-   Reduction( REAL newval, int row, int col )
+   Reduction( REAL newval, int64_t row, int64_t col )
        : newval( newval ), row( row ), col( col )
    {
    }
@@ -93,7 +93,7 @@ class Reductions
    {
       assert( transactions.empty() || transactions.back().end >= 0 );
 
-      const int start = static_cast<int>( reductions.size() );
+      const int64_t start = static_cast<int>( reductions.size() );
       transactions.emplace_back( start, -1 );
    }
 
@@ -102,44 +102,44 @@ class Reductions
    {
       assert( !transactions.empty() && transactions.back().end == -1 );
 
-      const int end = static_cast<int>( reductions.size() );
+      const int64_t end = static_cast<int>( reductions.size() );
       assert( end != transactions.back().start );
       transactions.back().end = end;
    }
 
    void
-   changeMatrixEntry( int row, int col, REAL newval )
+   changeMatrixEntry( int64_t row, int64_t col, REAL newval )
    {
       assert( row >= 0 && col >= 0 );
       reductions.emplace_back( newval, row, col );
    }
 
    void
-   changeRowLHS( int row, REAL newval )
+   changeRowLHS( int64_t row, REAL newval )
    {
       reductions.emplace_back( newval, row, RowReduction::LHS );
    }
 
    void
-   changeRowRHS( int row, REAL newval )
+   changeRowRHS( int64_t row, REAL newval )
    {
       reductions.emplace_back( newval, row, RowReduction::RHS );
    }
 
    void
-   changeRowLHSInf( int row )
+   changeRowLHSInf( int64_t row )
    {
       reductions.emplace_back( 0.0, row, RowReduction::LHS_INF );
    }
 
    void
-   changeRowRHSInf( int row )
+   changeRowRHSInf( int64_t row )
    {
       reductions.emplace_back( 0.0, row, RowReduction::RHS_INF );
    }
 
    void
-   markRowRedundant( int row )
+   markRowRedundant( int64_t row )
    {
       reductions.emplace_back( REAL{ 0.0 }, row, RowReduction::REDUNDANT );
    }
@@ -147,7 +147,7 @@ class Reductions
    /// lock row, i.e. modifications that come before this transaction are
    /// conflicting but not modifications that come after this transaction
    void
-   lockRow( int row )
+   lockRow( int64_t row )
    {
       // locks are only valid inside a transaction
       assert( !transactions.empty() && transactions.back().end == -1 );
@@ -162,7 +162,7 @@ class Reductions
    /// lock row with a strong lock, i.e. modifications that come before or after
    /// this transaction are conflicting
    void
-   lockRowStrong( int row )
+   lockRowStrong( int64_t row )
    {
       // locks are only valid inside a transaction
       assert( !transactions.empty() && transactions.back().end == -1 );
@@ -175,25 +175,25 @@ class Reductions
    }
 
    void
-   changeObjCoeff( int col, REAL newval )
+   changeObjCoeff( int64_t col, REAL newval )
    {
       reductions.emplace_back( newval, ColReduction::OBJECTIVE, col );
    }
 
    void
-   changeColLB( int col, REAL newval )
+   changeColLB( int64_t col, REAL newval )
    {
       reductions.emplace_back( newval, ColReduction::LOWER_BOUND, col );
    }
 
    void
-   changeColUB( int col, REAL newval )
+   changeColUB( int64_t col, REAL newval )
    {
       reductions.emplace_back( newval, ColReduction::UPPER_BOUND, col );
    }
 
    void
-   fixCol( int col, REAL val )
+   fixCol( int64_t col, REAL val )
    {
       reductions.emplace_back( val, ColReduction::FIXED, col );
    }
@@ -201,7 +201,7 @@ class Reductions
    /// lock column, i.e. modifications that come before this transaction are
    /// conflicting but not modifications that come after this transaction
    void
-   lockCol( int col )
+   lockCol( int64_t col )
    {
       assert( !transactions.empty() && transactions.back().end == -1 );
       assert( transactions.back().start + transactions.back().nlocks ==
@@ -214,7 +214,7 @@ class Reductions
    /// lock column with a strong lock, i.e. modifications that come before or
    /// after this transaction are conflicting
    void
-   lockColStrong( int col )
+   lockColStrong( int64_t col )
    {
       assert( !transactions.empty() && transactions.back().end == -1 );
       assert( transactions.back().start + transactions.back().nlocks ==
@@ -226,7 +226,7 @@ class Reductions
 
    /// lock column lower and upper bounds
    void
-   lockColBounds( int col )
+   lockColBounds( int64_t col )
    {
       assert( !transactions.empty() && transactions.back().end == -1 );
       assert( transactions.back().start + transactions.back().nlocks ==
@@ -238,7 +238,7 @@ class Reductions
 
    /// signal that a column in free and can be substituted in the matrix
    void
-   aggregateFreeCol( int col, int equalityRow )
+   aggregateFreeCol( int64_t col, int64_t equalityRow )
    {
       assert( col >= 0 && equalityRow >= 0 );
       reductions.emplace_back( static_cast<REAL>( equalityRow ),
@@ -247,7 +247,7 @@ class Reductions
 
    /// signal that a column in free and can be substituted in the matrix
    void
-   substituteColInObjective( int col, int equalityRow )
+   substituteColInObjective( int64_t col, int64_t equalityRow )
    {
       assert( col >= 0 && equalityRow >= 0 );
       reductions.emplace_back( static_cast<REAL>( equalityRow ),
@@ -256,7 +256,7 @@ class Reductions
 
    // replace col1 = factor * col2 + offset
    void
-   replaceCol( int col1, int col2, REAL factor, REAL offset )
+   replaceCol( int64_t col1, int64_t col2, REAL factor, REAL offset )
    {
       assert( col1 >= 0 && col2 >= 0 );
 
@@ -271,7 +271,7 @@ class Reductions
    /// where factor is computed by using the ratio between the two
    /// columns coefficients
    void
-   parallelCols( int col1, int col2 )
+   parallelCols( int64_t col1, int64_t col2 )
    {
       assert( col1 >= 0 && col2 >= 0 );
       reductions.emplace_back( static_cast<REAL>( col2 ),
@@ -279,18 +279,18 @@ class Reductions
    }
 
    void
-   impliedInteger( int col )
+   impliedInteger( int64_t col )
    {
       assert( col >= 0 );
       reductions.emplace_back( 0, ColReduction::IMPL_INT, col );
    }
 
    void
-   sparsify( int eq, int numrows, const std::pair<int, REAL>* sparsifiedrows )
+   sparsify( int64_t eq, int64_t numrows, const std::pair<int, REAL>* sparsifiedrows )
    {
       reductions.emplace_back( static_cast<REAL>( numrows ), eq,
                                RowReduction::SPARSIFY );
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
          reductions.emplace_back( sparsifiedrows[i].second,
                                   sparsifiedrows[i].first, RowReduction::NONE );
    }
@@ -316,12 +316,12 @@ class Reductions
 
    struct Transaction
    {
-      int start;
-      int end;
-      int nlocks;
-      int naddcoeffs;
+      int64_t start;
+      int64_t end;
+      int64_t nlocks;
+      int64_t naddcoeffs;
 
-      Transaction( int start, int end )
+      Transaction( int64_t start, int64_t end )
           : start( start ), end( end ), nlocks( 0 ), naddcoeffs( 0 )
       {
       }
@@ -339,7 +339,7 @@ class Reductions
 
  public:
    Reduction<REAL>&
-   getReduction( int i )
+   getReduction( int64_t i )
    {
       return reductions[i];
    }

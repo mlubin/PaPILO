@@ -67,13 +67,13 @@ class SoplexInterface : public SolverInterface<REAL>
    }
 
    void
-   setUp( const Problem<REAL>& problem, const Vec<int>& row_maps,
-          const Vec<int>& col_maps ) override
+   setUp( const Problem<REAL>& problem, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps ) override
    {
       using namespace soplex;
 
-      int ncols = problem.getNCols();
-      int nrows = problem.getNRows();
+      int64_t ncols = problem.getNCols();
+      int64_t nrows = problem.getNRows();
       const Vec<String>& varNames = problem.getVariableNames();
       const Vec<String>& consNames = problem.getConstraintNames();
       const VariableDomains<REAL>& domains = problem.getVariableDomains();
@@ -92,7 +92,7 @@ class SoplexInterface : public SolverInterface<REAL>
       LPRowSet rows( nrows );
       LPColSet cols( ncols );
       DSVector vec( ncols );
-      for( int i = 0; i < nrows; ++i )
+      for( int64_t i = 0; i < nrows; ++i )
       {
          Real lhs = rflags[i].test( RowFlag::kLhsInf ) ? -infinity
                                                        : Real( lhs_values[i] );
@@ -104,7 +104,7 @@ class SoplexInterface : public SolverInterface<REAL>
 
       spx.addRowsReal( rows );
 
-      for( int i = 0; i < ncols; ++i )
+      for( int64_t i = 0; i < ncols; ++i )
       {
          assert( !domains.flags[i].test( ColFlag::kInactive ) );
 
@@ -117,20 +117,14 @@ class SoplexInterface : public SolverInterface<REAL>
 
          auto colvec = consMatrix.getColumnCoefficients( i );
 
-         int collen = colvec.getLength();
-         const int* colrows = colvec.getIndices();
+         int64_t collen = colvec.getLength();
+         const int64_t* colrows = colvec.getIndices();
          const REAL* colvals = colvec.getValues();
 
          vec.clear();
 
-         if( std::is_same<REAL, Real>::value )
-         {
-            vec.add( collen, colrows, (const Real*)colvals );
-         }
-         else
-         {
-            for( int i = 0; i != collen; ++i )
-               vec.add( colrows[i], Real( colvals[i] ) );
+         for( int64_t i = 0; i != collen; ++i ) {
+            vec.add( static_cast<int>(colrows[i]), Real( colvals[i] ) );
          }
 
          cols.add( Real( obj.coefficients[i] ), lb, vec, ub );
@@ -140,14 +134,14 @@ class SoplexInterface : public SolverInterface<REAL>
    }
 
    void
-   setUp( const Problem<REAL>& problem, const Vec<int>& row_maps,
-          const Vec<int>& col_maps, const Components& components,
+   setUp( const Problem<REAL>& problem, const Vec<int64_t>& row_maps,
+          const Vec<int64_t>& col_maps, const Components& components,
           const ComponentInfo& component ) override
    {
       using namespace soplex;
 
-      int ncols = problem.getNCols();
-      int nrows = problem.getNRows();
+      int64_t ncols = problem.getNCols();
+      int64_t nrows = problem.getNRows();
       const Vec<String>& varNames = problem.getVariableNames();
       const Vec<String>& consNames = problem.getConstraintNames();
       const VariableDomains<REAL>& domains = problem.getVariableDomains();
@@ -156,10 +150,10 @@ class SoplexInterface : public SolverInterface<REAL>
       const auto& lhs_values = consMatrix.getLeftHandSides();
       const auto& rhs_values = consMatrix.getRightHandSides();
       const auto& rflags = problem.getRowFlags();
-      const int* rowset = components.getComponentsRows( component.componentid );
-      const int* colset = components.getComponentsCols( component.componentid );
-      int numrows = components.getComponentsNumRows( component.componentid );
-      int numcols = components.getComponentsNumCols( component.componentid );
+      const int64_t* rowset = components.getComponentsRows( component.componentid );
+      const int64_t* colset = components.getComponentsCols( component.componentid );
+      int64_t numrows = components.getComponentsNumRows( component.componentid );
+      int64_t numcols = components.getComponentsNumCols( component.componentid );
 
       /* set the objective sense and offset */
       spx.setIntParam( SoPlex::OBJSENSE, SoPlex::OBJSENSE_MINIMIZE );
@@ -167,9 +161,9 @@ class SoplexInterface : public SolverInterface<REAL>
       LPRowSet rows( numrows );
       LPColSet cols( numcols );
       DSVector vec( numcols );
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
       {
-         int row = rowset[i];
+         int64_t row = rowset[i];
 
          assert( components.getRowComponentIdx( row ) == i );
 
@@ -185,9 +179,9 @@ class SoplexInterface : public SolverInterface<REAL>
 
       spx.addRowsReal( rows );
 
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
       {
-         int col = colset[i];
+         int64_t col = colset[i];
 
          assert( components.getColComponentIdx( col ) == i );
          assert( !domains.flags[col].test( ColFlag::kInactive ) );
@@ -201,13 +195,13 @@ class SoplexInterface : public SolverInterface<REAL>
 
          auto colvec = consMatrix.getColumnCoefficients( col );
 
-         int collen = colvec.getLength();
-         const int* colrows = colvec.getIndices();
+         int64_t collen = colvec.getLength();
+         const int64_t* colrows = colvec.getIndices();
          const REAL* colvals = colvec.getValues();
 
          vec.clear();
 
-         for( int j = 0; j != collen; ++j )
+         for( int64_t j = 0; j != collen; ++j )
             vec.add( components.getRowComponentIdx( colrows[j] ),
                      Real( colvals[j] ) );
 
@@ -287,14 +281,14 @@ class SoplexInterface : public SolverInterface<REAL>
    {
       Vec<soplex::Real> buffer;
 
-      int numcols = spx.numColsReal();
+      int64_t numcols = spx.numColsReal();
       buffer.resize( numcols );
 
       if( !spx.getPrimalReal( buffer.data(), numcols ) )
          return false;
 
       sol.primal.resize( numcols );
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
          sol.primal[i] = REAL( buffer[i] );
 
       if( sol.type == SolutionType::kPrimal )
@@ -304,29 +298,29 @@ class SoplexInterface : public SolverInterface<REAL>
          return false;
 
       sol.col_dual.resize( numcols );
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
          sol.col_dual[i] = REAL( buffer[i] );
 
-      int numrows = spx.numRowsReal();
+      int64_t numrows = spx.numRowsReal();
 
       buffer.resize( numrows );
       if( !spx.getDualReal( buffer.data(), numrows ) )
          return false;
 
       sol.row_dual.resize( numrows );
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
          sol.row_dual[i] = REAL( buffer[i] );
 
       return true;
    }
 
    bool
-   getSolution( const Components& components, int component,
+   getSolution( const Components& components, int64_t component,
                 Solution<REAL>& sol ) override
    {
       Vec<soplex::Real> buffer;
 
-      int numcols = spx.numColsReal();
+      int64_t numcols = spx.numColsReal();
       assert( components.getComponentsNumCols( component ) ==
               spx.numColsReal() );
 
@@ -334,8 +328,8 @@ class SoplexInterface : public SolverInterface<REAL>
       if( !spx.getPrimalReal( buffer.data(), numcols ) )
          return false;
 
-      const int* compcols = components.getComponentsCols( component );
-      for( int i = 0; i != numcols; ++i )
+      const int64_t* compcols = components.getComponentsCols( component );
+      for( int64_t i = 0; i != numcols; ++i )
          sol.primal[compcols[i]] = REAL( buffer[i] );
 
       if( sol.type == SolutionType::kPrimal )
@@ -344,17 +338,17 @@ class SoplexInterface : public SolverInterface<REAL>
       if( !spx.getRedCostReal( buffer.data(), numcols ) )
          return false;
 
-      for( int i = 0; i != numcols; ++i )
+      for( int64_t i = 0; i != numcols; ++i )
          sol.col_dual[compcols[i]] = REAL( buffer[i] );
 
-      int numrows = spx.numRowsReal();
+      int64_t numrows = spx.numRowsReal();
       buffer.resize( numrows );
-      const int* comprows = components.getComponentsRows( component );
+      const int64_t* comprows = components.getComponentsRows( component );
 
       if( !spx.getDualReal( buffer.data(), numrows ) )
          return false;
 
-      for( int i = 0; i != numrows; ++i )
+      for( int64_t i = 0; i != numrows; ++i )
          sol.row_dual[comprows[i]] = REAL( buffer[i] );
 
       return true;

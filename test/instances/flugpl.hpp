@@ -127,8 +127,8 @@ flugpl()
        "STM1", "ANM1", "UE1", "STM2", "ANM2", "UE2", "STM3", "ANM3", "UE3",
        "STM4", "ANM4", "UE4", "STM5", "ANM5", "UE5", "STM6", "ANM6", "UE6",
    };
-   int nCols = 18;
-   int nRows = 18;
+   int64_t nCols = 18;
+   int64_t nRows = 18;
    ProblemBuilder<double> pb;
    pb.reserve( 46, 18, 18 );
    pb.setNumRows( nRows );

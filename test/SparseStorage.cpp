@@ -35,8 +35,8 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
    // 0  8  0  0  0  0  0  0  0
    // 0  0  0  0  0  0  0  0  0
    // 9  10 11 0  0  0  0  12 13
-   int nrows = 5;
-   int ncols = 9;
+   int64_t nrows = 5;
+   int64_t ncols = 9;
    Vec<Triplet<double>> triplets = {
        Triplet<double>{0, 0, 1.0},  Triplet<double>{0, 1, 2.0},
        Triplet<double>{1, 1, 3.0},  Triplet<double>{1, 2, 4.0},
@@ -46,8 +46,8 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
        Triplet<double>{4, 2, 11.0}, Triplet<double>{4, 7, 12.0},
        Triplet<double>{4, 8, 13.0}};
 
-   Vec<int> rowsize = {2, 5, 1, -1, 5};
-   Vec<int> colsize = {2, 4, 2, 1, 1, 1, -1, 1, 1};
+   Vec<int64_t> rowsize = {2, 5, 1, -1, 5};
+   Vec<int64_t> colsize = {2, 4, 2, 1, 1, 1, -1, 1, 1};
    SparseStorage<double> matrix{triplets, nrows, ncols, true};
    SparseStorage<double> transpose = matrix.getTranspose();
 
@@ -62,11 +62,11 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
    auto rowranges = matrix.getRowRanges();
    auto rowvalues = matrix.getValues();
    auto columns = matrix.getColumns();
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       REQUIRE( rowranges[i].end - rowranges[i].start == rowsize[i] );
       double* row = rowvalues + rowranges[i].start;
-      int* rowcols = columns + rowranges[i].start;
+      int64_t* rowcols = columns + rowranges[i].start;
       switch( i )
       {
       case 0:
@@ -112,11 +112,11 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
    auto colranges = transpose.getRowRanges();
    auto colvalues = transpose.getValues();
    auto rows = transpose.getColumns();
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       REQUIRE( colranges[i].end - colranges[i].start == colsize[i] );
       double* col = colvalues + colranges[i].start;
-      int* colrows = rows + colranges[i].start;
+      int64_t* colrows = rows + colranges[i].start;
       switch( i )
       {
       case 0:
@@ -166,14 +166,14 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
       }
    }
 
-   Vec<int> col_mapping = matrix.compress( colsize );
-   Vec<int> row_mapping = transpose.compress( rowsize );
+   Vec<int64_t> col_mapping = matrix.compress( colsize );
+   Vec<int64_t> row_mapping = transpose.compress( rowsize );
 
    REQUIRE( col_mapping.size() == ncols );
    REQUIRE( row_mapping.size() == nrows );
 
    /* check if empty row at index 3 was removed properly */
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       if( i < 3 )
          REQUIRE( row_mapping[i] == i );
@@ -184,7 +184,7 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
    }
 
    /* check if empty col at index 6 was removed properly */
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       if( i < 6 )
          REQUIRE( col_mapping[i] == i );
@@ -203,11 +203,11 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
    rowranges = matrix.getRowRanges();
    rowvalues = matrix.getValues();
    columns = matrix.getColumns();
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       REQUIRE( rowranges[i].end - rowranges[i].start == rowsize[i] );
       double* row = rowvalues + rowranges[i].start;
-      int* rowcols = columns + rowranges[i].start;
+      int64_t* rowcols = columns + rowranges[i].start;
       switch( i )
       {
       case 0:
@@ -251,11 +251,11 @@ TEST_CASE( "sparse storage can be created from triplets and compressed",
    colranges = transpose.getRowRanges();
    colvalues = transpose.getValues();
    rows = transpose.getColumns();
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       REQUIRE( colranges[i].end - colranges[i].start == colsize[i] );
       double* col = colvalues + colranges[i].start;
-      int* colrows = rows + colranges[i].start;
+      int64_t* colrows = rows + colranges[i].start;
       switch( i )
       {
       case 0:

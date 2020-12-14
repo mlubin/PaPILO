@@ -108,8 +108,8 @@ This ensures that regardless of numerical type used for `REAL`, that infinite va
 
 The member functions for initializing the rows and columns are
 ```
-setNumCols( int ncols )
-setNumRows( int nrows )
+setNumCols( int64_t ncols )
+setNumRows( int64_t nrows )
 ```
 After calling those functions the problem will have no nonzero entries but the given number of columns and rows. The left and right hand side values of rows the rows are set to $0$ as well as the lower and upper bounds of the columns. Additionally all columns are initialized as continuous columns.
 
@@ -117,45 +117,45 @@ Next the following member functions can be used to alter the bound information a
 
 *   alter objective coefficient for columns
     ```
-    setObj( int col, REAL val )
+    setObj( int64_t col, REAL val )
     ```
 *   alter bound information for columns
     ```
-    setColLb( int col, REAL lb )
-    setColLbInf( int col, bool isInfinite )
-    setColUb( int col, REAL ub )
-    setColUbInf( int col, bool isInfinite )
+    setColLb( int64_t col, REAL lb )
+    setColLbInf( int64_t col, bool isInfinite )
+    setColUb( int64_t col, REAL ub )
+    setColUbInf( int64_t col, bool isInfinite )
     ```
 *   mark column to be restricted to integral values or not
     ```
-    setColIntegral( int col, bool isIntegral )
+    setColIntegral( int64_t col, bool isIntegral )
     ```
 *   alter left and right hand sides of rows
     ```
-    setRowLhsInf( int row, bool isInfinite )
-    setRowRhsInf( int row, bool isInfinite )
-    setRowLhs( int row, REAL lhsval )
-    setRowRhs( int row, REAL rhsval )
+    setRowLhsInf( int64_t row, bool isInfinite )
+    setRowRhsInf( int64_t row, bool isInfinite )
+    setRowLhs( int64_t row, REAL lhsval )
+    setRowRhs( int64_t row, REAL rhsval )
     ```
 *   set names of rows, columns, and the problem
     ```
-    setRowName( int row, Str&& name )
-    setColName( int col, Str&& name )
+    setRowName( int64_t row, Str&& name )
+    setColName( int64_t col, Str&& name )
     setProblemName( Str&& name )
     ```
 
 Adding nonzeros to the problem can be done with individual nonzero values, row-based, or column-based using the following functions:
 ```
    /// add the nonzero entries for the given column
-   addColEntries( int col, int len, const int* rows, const R* vals )
+   addColEntries( int64_t col, int64_t len, const int64_t* rows, const R* vals )
    /// add a nonzero entry for the given row and column
-   addEntry( int row, int col, const REAL& val )
+   addEntry( int64_t row, int64_t col, const REAL& val )
    /// add the nonzero entries for the given row
-   addRowEntries( int row, int len, const int* cols, const R* vals )
+   addRowEntries( int64_t row, int64_t len, const int64_t* cols, const R* vals )
 ```
 All those functions can be called multiple times, but a nonzero entry for a particular column in a particular row should only be added once.
 For maximum efficiency the member function
-`papilo::ProblemBuilder<REAL>::reserve(int nnz, int nrows, int ncols)` should be used to reserve all required memory before adding nonzeros.
+`papilo::ProblemBuilder<REAL>::reserve(int nnz, int64_t nrows, int64_t ncols)` should be used to reserve all required memory before adding nonzeros.
 
 Finally calling `papilo::ProblemBuilder<REAL>::build()` will return an instance of `papilo::Problem<REAL>` with the information that was given to the builder. The builder can be reused afterwards.
 

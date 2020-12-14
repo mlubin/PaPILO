@@ -430,8 +430,8 @@ lseu()
        "C173", "C174", "C175", "C176", "C177", "C178", "C179", "C180", "C181",
        "C182", "C183", "C184", "C185", "C186", "C187", "C188", "C189",
    };
-   int nCols = 89;
-   int nRows = 28;
+   int64_t nCols = 89;
+   int64_t nRows = 28;
    ProblemBuilder<double> pb;
    pb.reserve( 309, 28, 89 );
    pb.setNumRows( nRows );

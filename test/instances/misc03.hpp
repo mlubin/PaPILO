@@ -2232,8 +2232,8 @@ misc03()
        "COL148", "COL149", "COL150", "COL151", "COL152", "COL153", "COL154",
        "COL155", "COL156", "COL157", "COL158", "COL159", "COL160",
    };
-   int nCols = 160;
-   int nRows = 96;
+   int64_t nCols = 160;
+   int64_t nRows = 96;
    ProblemBuilder<double> pb;
    pb.reserve( 2053, 96, 160 );
    pb.setNumRows( nRows );

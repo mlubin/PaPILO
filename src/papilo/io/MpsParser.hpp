@@ -192,9 +192,9 @@ class MpsParser
    Vec<ColFlags> col_flags;
    REAL objoffset = 0;
 
-   int nCols = 0;
-   int nRows = 0;
-   int nnz = -1;
+   int64_t nCols = 0;
+   int64_t nRows = 0;
+   int64_t nnz = -1;
 
    /// checks first word of strline and wraps it by it_begin and it_end
    parsekey
@@ -380,9 +380,9 @@ MpsParser<REAL>::parseCols( boost::iostreams::filtering_istream& file,
 
    std::string colname = "";
    std::string strline;
-   int rowidx;
-   int ncols = 0;
-   int colstart = 0;
+   int64_t rowidx;
+   int64_t ncols = 0;
+   int64_t colstart = 0;
    bool integral_cols = false;
 
    auto parsename = [&rowidx, this]( std::string name ) {
@@ -528,7 +528,7 @@ MpsParser<REAL>::parseRanges( boost::iostreams::filtering_istream& file )
       if( word_ref.empty() )
          continue;
 
-      int rowidx;
+      int64_t rowidx;
 
       auto parsename = [&rowidx, this]( std::string name ) {
          auto mit = rowname2idx.find( name );
@@ -606,7 +606,7 @@ MpsParser<REAL>::parseRhs( boost::iostreams::filtering_istream& file )
       if( word_ref.empty() )
          continue;
 
-      int rowidx;
+      int64_t rowidx;
 
       auto parsename = [&rowidx, this]( std::string name ) {
          auto mit = rowname2idx.find( name );
@@ -733,7 +733,7 @@ MpsParser<REAL>::parseBounds( boost::iostreams::filtering_istream& file )
       qi::phrase_parse( it, strline.end(), qi::lexeme[+qi::graph],
                         ascii::space );
 
-      int colidx;
+      int64_t colidx;
 
       auto parsename = [&colidx, this]( std::string name ) {
          auto mit = colname2idx.find( name );

@@ -34,8 +34,8 @@ namespace papilo
 
 template <typename REAL>
 void
-addRow( Problem<REAL>& problem, const int row, const int length,
-        const REAL* values, const int* coeffs, const REAL lhs, const REAL rhs,
+addRow( Problem<REAL>& problem, const int64_t row, const int64_t length,
+        const REAL* values, const int64_t* coeffs, const REAL lhs, const REAL rhs,
         const bool lb_inf, const bool ub_inf )
 {
    // Assuming problem is expanded and row will be added at the preacllocated

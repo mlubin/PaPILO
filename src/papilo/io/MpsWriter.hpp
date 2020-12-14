@@ -50,7 +50,7 @@ struct MpsWriter
 {
    static void
    writeProb( const std::string& filename, const Problem<REAL>& prob,
-              const Vec<int>& row_mapping, const Vec<int>& col_mapping )
+              const Vec<int64_t>& row_mapping, const Vec<int64_t>& col_mapping )
    {
       const ConstraintMatrix<REAL>& consmatrix = prob.getConstraintMatrix();
       const Vec<std::string>& consnames = prob.getConstraintNames();
@@ -85,7 +85,7 @@ struct MpsWriter
       fmt::print( out, "ROWS\n" );
       fmt::print( out, " N  OBJ\n" );
       bool hasRangedRow = false;
-      for( int i = 0; i < consmatrix.getNRows(); ++i )
+      for( int64_t i = 0; i < consmatrix.getNRows(); ++i )
       {
          // discard redundant rows when writing problem
          assert( !consmatrix.isRowRedundant( i ) );
@@ -111,15 +111,15 @@ struct MpsWriter
 
       fmt::print( out, "COLUMNS\n" );
 
-      int hasintegral = prob.getNumIntegralCols() != 0;
+      int64_t hasintegral = prob.getNumIntegralCols() != 0;
 
-      for( int integral = 0; integral <= hasintegral; ++integral )
+      for( int64_t integral = 0; integral <= hasintegral; ++integral )
       {
          if( integral )
             fmt::print( out,
                         "    MARK0000  'MARKER'                 'INTORG'\n" );
 
-         for( int i = 0; i < consmatrix.getNCols(); ++i )
+         for( int64_t i = 0; i < consmatrix.getNCols(); ++i )
          {
             if( col_flags[i].test( ColFlag::kInactive ) )
                continue;
@@ -141,13 +141,13 @@ struct MpsWriter
             SparseVectorView<REAL> column =
                 consmatrix.getColumnCoefficients( i );
 
-            const int* rowinds = column.getIndices();
+            const int64_t* rowinds = column.getIndices();
             const REAL* colvals = column.getValues();
-            int len = column.getLength();
+            int64_t len = column.getLength();
 
-            for( int j = 0; j < len; ++j )
+            for( int64_t j = 0; j < len; ++j )
             {
-               int r = rowinds[j];
+               int64_t r = rowinds[j];
 
                // discard redundant rows when writing problem
                if( consmatrix.isRowRedundant( r ) )
@@ -177,7 +177,7 @@ struct MpsWriter
                         double( REAL( -obj.offset ) ) );
       }
 
-      for( int i = 0; i < consmatrix.getNRows(); ++i )
+      for( int64_t i = 0; i < consmatrix.getNRows(); ++i )
       {
          // discard redundant rows when writing problem
          if( consmatrix.isRowRedundant( i ) )
@@ -204,7 +204,7 @@ struct MpsWriter
       if( hasRangedRow )
       {
          fmt::print( out, "RANGES\n" );
-         for( int i = 0; i < consmatrix.getNRows(); ++i )
+         for( int64_t i = 0; i < consmatrix.getNRows(); ++i )
          {
             if( row_flags[i].test( RowFlag::kLhsInf, RowFlag::kRhsInf,
                                    RowFlag::kEquation, RowFlag::kRedundant ) )
@@ -222,7 +222,7 @@ struct MpsWriter
 
       fmt::print( out, "BOUNDS\n" );
 
-      for( int i = 0; i < consmatrix.getNCols(); ++i )
+      for( int64_t i = 0; i < consmatrix.getNCols(); ++i )
       {
          if( col_flags[i].test( ColFlag::kInactive ) )
             continue;

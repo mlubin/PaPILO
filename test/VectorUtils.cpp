@@ -49,8 +49,8 @@ TEST_CASE( "matrix-comparisons", "[misc]" )
    // 0  8  0  0  0  0  0  0  0
    // 0  0  0  0  0  0  0  0  0
    // 9  10 11 0  0  0  0  12 13
-   int nrows = 5;
-   int ncols = 9;
+   int64_t nrows = 5;
+   int64_t ncols = 9;
    Vec<Triplet<double>> triplets = {
        Triplet<double>{0, 0, 1.0},  Triplet<double>{0, 1, 2.0},
        Triplet<double>{1, 1, 3.0},  Triplet<double>{1, 2, 4.0},
@@ -60,8 +60,8 @@ TEST_CASE( "matrix-comparisons", "[misc]" )
        Triplet<double>{4, 2, 11.0}, Triplet<double>{4, 7, 12.0},
        Triplet<double>{4, 8, 13.0}};
 
-   Vec<int> rowsize = {2, 5, 1, -1, 5};
-   Vec<int> colsize = {2, 4, 2, 1, 1, 1, -1, 1, 1};
+   Vec<int64_t> rowsize = {2, 5, 1, -1, 5};
+   Vec<int64_t> colsize = {2, 4, 2, 1, 1, 1, -1, 1, 1};
    SparseStorage<double> matrix{triplets, nrows, ncols, true};
    SparseStorage<double> transpose = matrix.getTranspose();
 
@@ -98,16 +98,16 @@ TEST_CASE( "problem-comparisons", "[misc]" )
    // 1  2  0  0
    // 0  3  4  5
    // 0  8  0  1
-   int nrows = 3;
-   int ncols = 4;
+   int64_t nrows = 3;
+   int64_t ncols = 4;
    Vec<Triplet<double>> triplets = {
        Triplet<double>{0, 0, 1.0}, Triplet<double>{0, 1, 2.0},
        Triplet<double>{1, 1, 3.0}, Triplet<double>{1, 2, 4.0},
        Triplet<double>{1, 3, 5.0}, Triplet<double>{2, 1, 8.0},
        Triplet<double>{2, 3, 1.0}};
 
-   Vec<int> rowsize = {2, 3, 2};
-   Vec<int> colsize = {1, 3, 1, 2};
+   Vec<int64_t> rowsize = {2, 3, 2};
+   Vec<int64_t> colsize = {1, 3, 1, 2};
    SparseStorage<double> matrix{triplets, nrows, ncols, true};
 
    Vec<double> lhs{0, 1, 2};

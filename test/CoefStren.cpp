@@ -47,7 +47,7 @@ TEST_CASE( "test coefficient tightening reduction", "[core]" )
    Reductions<float> reductions;
 
    auto constraintchange = [&reductions](
-                               Action constchange, int i,
+                               Action constchange, int64_t i,
                                Vec<std::pair<int, float>> rowcoefchanges,
                                float newbound ) {
       assert( !rowcoefchanges.empty() );
@@ -71,7 +71,7 @@ TEST_CASE( "test coefficient tightening reduction", "[core]" )
    // 0 <= y <= 2
    // x,y integer
    float coefficients[] = {1, 2};
-   int indices[] = {0, 1};
+   int64_t indices[] = {0, 1};
    RowActivity<float> activity;
    activity.max = 6.0;
    activity.min = 0.0;

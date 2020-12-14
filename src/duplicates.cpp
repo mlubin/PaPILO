@@ -45,7 +45,7 @@ fileExists( const std::string& name )
    return ( stat( name.c_str(), &buff ) == 0 );
 }
 
-static std::pair<Vec<int>, Vec<int>>
+static std::pair<Vec<int64_t>, Vec<int64_t>>
 compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
 {
    const ConstraintMatrix<double>& consmatrix = prob.getConstraintMatrix();
@@ -55,18 +55,18 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
    // const Vec<String> rnames = prob.getConstraintNames();
    // const Vec<String> cnames = prob.getVariableNames();
 
-   std::pair<Vec<int>, Vec<int>> retval;
+   std::pair<Vec<int64_t>, Vec<int64_t>> retval;
    Vec<uint64_t> rowhashes;
    Vec<uint64_t> colhashes;
 
-   auto obj = [&]( int col ) {
+   auto obj = [&]( int64_t col ) {
       double tmp = prob.getObjective().coefficients[col];
       uint64_t val;
       std::memcpy( &val, &tmp, sizeof( double ) );
       return val;
    };
 
-   auto lb = [&]( int col ) {
+   auto lb = [&]( int64_t col ) {
       double tmp = prob.getColFlags()[col].test( ColFlag::kLbInf )
                        ? std::numeric_limits<double>::lowest()
                        : prob.getLowerBounds()[col];
@@ -75,7 +75,7 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
       return val;
    };
 
-   auto ub = [&]( int col ) {
+   auto ub = [&]( int64_t col ) {
       double tmp = prob.getColFlags()[col].test( ColFlag::kUbInf )
                        ? std::numeric_limits<double>::max()
                        : prob.getUpperBounds()[col];
@@ -84,7 +84,7 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
       return val;
    };
 
-   auto lhs = [&]( int row ) {
+   auto lhs = [&]( int64_t row ) {
       double tmp = consmatrix.getRowFlags()[row].test( RowFlag::kLhsInf )
                        ? std::numeric_limits<double>::lowest()
                        : consmatrix.getLeftHandSides()[row];
@@ -93,7 +93,7 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
       return val;
    };
 
-   auto rhs = [&]( int row ) {
+   auto rhs = [&]( int64_t row ) {
       double tmp = consmatrix.getRowFlags()[row].test( RowFlag::kRhsInf )
                        ? std::numeric_limits<double>::max()
                        : consmatrix.getRightHandSides()[row];
@@ -102,26 +102,26 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
       return val;
    };
 
-   auto col_is_integral = [&]( int col ) {
+   auto col_is_integral = [&]( int64_t col ) {
       return static_cast<uint64_t>(
           prob.getColFlags()[col].test( ColFlag::kIntegral ) );
    };
 
-   int ncols = prob.getNCols();
-   int nrows = prob.getNRows();
+   int64_t ncols = prob.getNCols();
+   int64_t nrows = prob.getNRows();
    colhashes.resize( ncols + 2 );
    rowhashes.resize( nrows + 4 );
 
-   const int LHS = ncols;
-   const int RHS = ncols + 1;
+   const int64_t LHS = ncols;
+   const int64_t RHS = ncols + 1;
 
    colhashes[LHS] = UINT64_MAX;
    colhashes[RHS] = UINT64_MAX - 1;
 
-   const int OBJ = nrows;
-   const int INTEGRAL = nrows + 1;
-   const int LB = nrows + 2;
-   const int UB = nrows + 3;
+   const int64_t OBJ = nrows;
+   const int64_t INTEGRAL = nrows + 1;
+   const int64_t LB = nrows + 2;
+   const int64_t UB = nrows + 3;
 
    rowhashes[OBJ] = UINT64_MAX - 2;
    rowhashes[INTEGRAL] = UINT64_MAX - 3;
@@ -129,17 +129,17 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
    rowhashes[UB] = UINT64_MAX - 5;
 
    Vec<std::pair<uint64_t, int>> csrvals;
-   Vec<int> csrstarts;
+   Vec<int64_t> csrstarts;
 
    csrstarts.resize( nrows + 1 );
    csrvals.reserve( consmatrix.getNnz() + 2 * nrows );
 
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       csrstarts[i] = csrvals.size();
 
       auto rowvec = consmatrix.getRowCoefficients( i );
-      for( int k = 0; k < rowvec.getLength(); ++k )
+      for( int64_t k = 0; k < rowvec.getLength(); ++k )
       {
          uint64_t coef;
          std::memcpy( &coef, rowvec.getValues() + k, sizeof( double ) );
@@ -153,16 +153,16 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
    csrstarts[nrows] = csrvals.size();
 
    Vec<std::pair<uint64_t, int>> cscvals;
-   Vec<int> cscstarts;
+   Vec<int64_t> cscstarts;
    cscstarts.resize( ncols + 1 );
    cscvals.reserve( consmatrix.getNnz() + 4 * ncols );
 
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       cscstarts[i] = cscvals.size();
 
       auto colvec = consmatrix.getColumnCoefficients( i );
-      for( int k = 0; k < colvec.getLength(); ++k )
+      for( int64_t k = 0; k < colvec.getLength(); ++k )
       {
          uint64_t coef;
          std::memcpy( &coef, colvec.getValues() + k, sizeof( double ) );
@@ -189,21 +189,21 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
              std::make_pair( b.first, rowhashes[b.second] );
    };
 
-   int iters = 0;
+   int64_t iters = 0;
    size_t lastncols = -1;
    HashMap<uint64_t, size_t> distinct_hashes( ncols );
 
    size_t lastnrows = -1;
    HashMap<uint64_t, size_t> distinct_row_hashes( nrows );
 
-   Vec<int>& colperm = retval.second;
+   Vec<int64_t>& colperm = retval.second;
    colperm.resize( ncols );
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
       colperm[i] = i;
 
-   Vec<int>& rowperm = retval.first;
+   Vec<int64_t>& rowperm = retval.first;
    rowperm.resize( nrows );
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
       rowperm[i] = i;
 
    size_t nrows2 = nrows;
@@ -212,17 +212,17 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
    while( nrows2 != 0 )
    {
       tbb::parallel_for(
-          tbb::blocked_range<int>( 0, nrows2 ),
-          [&]( const tbb::blocked_range<int>& r ) {
-             for( int i = r.begin(); i != r.end(); ++i )
+          tbb::blocked_range<int64_t>( 0, nrows2 ),
+          [&]( const tbb::blocked_range<int64_t>& r ) {
+             for( int64_t i = r.begin(); i != r.end(); ++i )
              {
-                int row = rowperm[i];
-                int start = csrstarts[row];
-                int end = csrstarts[row + 1];
+                int64_t row = rowperm[i];
+                int64_t start = csrstarts[row];
+                int64_t end = csrstarts[row + 1];
                 pdqsort( &csrvals[start], &csrvals[end], comp_rowvals );
 
                 Hasher<uint64_t> hasher( end - start );
-                for( int k = start; k < end; ++k )
+                for( int64_t k = start; k < end; ++k )
                 {
                    hasher.addValue( csrvals[k].first );
                    hasher.addValue( colhashes[csrvals[k].second] );
@@ -236,7 +236,7 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
       for( size_t i = 0; i < nrows2; ++i )
          distinct_row_hashes[rowhashes[rowperm[i]]] += 1;
 
-      pdqsort( rowperm.begin(), rowperm.begin() + nrows2, [&]( int a, int b ) {
+      pdqsort( rowperm.begin(), rowperm.begin() + nrows2, [&]( int64_t a, int64_t b ) {
          return std::make_tuple( -distinct_row_hashes[rowhashes[a]],
                                  rowhashes[a], a ) <
                 std::make_tuple( -distinct_row_hashes[rowhashes[b]],
@@ -272,17 +272,17 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
          break;
 
       tbb::parallel_for(
-          tbb::blocked_range<int>( 0, ncols2 ),
-          [&]( const tbb::blocked_range<int>& r ) {
-             for( int i = r.begin(); i != r.end(); ++i )
+          tbb::blocked_range<int64_t>( 0, ncols2 ),
+          [&]( const tbb::blocked_range<int64_t>& r ) {
+             for( int64_t i = r.begin(); i != r.end(); ++i )
              {
-                int col = colperm[i];
-                int start = cscstarts[col];
-                int end = cscstarts[col + 1];
+                int64_t col = colperm[i];
+                int64_t start = cscstarts[col];
+                int64_t end = cscstarts[col + 1];
                 pdqsort( &cscvals[start], &cscvals[end], comp_colvals );
 
                 Hasher<uint64_t> hasher( end - start );
-                for( int k = start; k < end; ++k )
+                for( int64_t k = start; k < end; ++k )
                 {
                    hasher.addValue( cscvals[k].first );
                    hasher.addValue( rowhashes[cscvals[k].second] );
@@ -296,7 +296,7 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
       for( size_t i = 0; i < ncols2; ++i )
          distinct_hashes[colhashes[colperm[i]]] += 1;
 
-      pdqsort( colperm.begin(), colperm.begin() + ncols2, [&]( int a, int b ) {
+      pdqsort( colperm.begin(), colperm.begin() + ncols2, [&]( int64_t a, int64_t b ) {
          return std::make_pair( -distinct_hashes[colhashes[a]], colhashes[a] ) <
                 std::make_pair( -distinct_hashes[colhashes[b]], colhashes[b] );
       } );
@@ -334,8 +334,8 @@ compute_row_and_column_permutation( const Problem<double>& prob, bool verbose )
 /// Tries to compute a permutation for columns
 static bool
 guess_permutation_col( const Problem<double>& prob1,
-                       const Problem<double>& prob2, Vec<int>& out_perm1,
-                       Vec<int>& out_perm2 )
+                       const Problem<double>& prob2, Vec<int64_t>& out_perm1,
+                       Vec<int64_t>& out_perm2 )
 {
    // for every col I want to find another matching one
 
@@ -344,20 +344,20 @@ guess_permutation_col( const Problem<double>& prob1,
 
 /// Outputs array of length n representing no permutation
 static void
-fill_identity_permutation( Vec<int>& out_perm )
+fill_identity_permutation( Vec<int64_t>& out_perm )
 {
-   int n = out_perm.size();
-   for( int i = 0; i < n; ++i )
+   int64_t n = out_perm.size();
+   for( int64_t i = 0; i < n; ++i )
       out_perm[i] = i;
 }
 
 /// Returns True if variables in given permutation have same attributes
 static bool
 check_cols( const Problem<double>& prob1, const Problem<double>& prob2,
-            Vec<int> perm1, const Vec<int> perm2 )
+            Vec<int64_t> perm1, const Vec<int64_t> perm2 )
 {
    assert( perm1.size() == perm2.size() );
-   int ncols = perm1.size();
+   int64_t ncols = perm1.size();
 
    const VariableDomains<double>& vd1 = prob1.getVariableDomains();
    const VariableDomains<double>& vd2 = prob2.getVariableDomains();
@@ -365,16 +365,16 @@ check_cols( const Problem<double>& prob1, const Problem<double>& prob2,
    const Vec<String> cnames1 = prob1.getVariableNames();
    const Vec<String> cnames2 = prob2.getVariableNames();
 
-   auto printVarsAndIndex = [&]( int i1, int i2 ) {
+   auto printVarsAndIndex = [&]( int64_t i1, int64_t i2 ) {
       fmt::print( "Differing Variables: Problem 1: {:6} at index {:<5} vs ",
                   cnames1[i1], i1 );
       fmt::print( "Problem 2: {:6} at index {:<5}\n", cnames2[i2], i2 );
    };
 
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
-      int i1 = perm1[i];
-      int i2 = perm2[i];
+      int64_t i1 = perm1[i];
+      int64_t i2 = perm2[i];
 
       if( vd1.flags[i1].test( ColFlag::kIntegral ) !=
           vd2.flags[i2].test( ColFlag::kIntegral ) )
@@ -432,8 +432,8 @@ check_cols( const Problem<double>& prob1, const Problem<double>& prob2,
 /// permutation
 static bool
 check_rows( const Problem<double>& prob1, const Problem<double>& prob2,
-            Vec<int> permrow1, Vec<int> permrow2, Vec<int> permcol1,
-            Vec<int> permcol2 )
+            Vec<int64_t> permrow1, Vec<int64_t> permrow2, Vec<int64_t> permcol1,
+            Vec<int64_t> permcol2 )
 {
    assert( permrow1.size() == permrow2.size() );
    assert( permcol1.size() == permcol2.size() );
@@ -441,8 +441,8 @@ check_rows( const Problem<double>& prob1, const Problem<double>& prob2,
    const ConstraintMatrix<double>& cm1 = prob1.getConstraintMatrix();
    const ConstraintMatrix<double>& cm2 = prob2.getConstraintMatrix();
 
-   int nrows = permrow1.size();
-   int ncols = permcol1.size();
+   int64_t nrows = permrow1.size();
+   int64_t ncols = permcol1.size();
    // Row flags
    const Vec<RowFlags>& rflags1 = cm1.getRowFlags();
    const Vec<RowFlags>& rflags2 = cm2.getRowFlags();
@@ -459,21 +459,21 @@ check_rows( const Problem<double>& prob1, const Problem<double>& prob2,
    const Vec<String> rnames1 = prob1.getConstraintNames();
    const Vec<String> rnames2 = prob2.getConstraintNames();
 
-   auto printConstraintsAndIndex = [&]( int i1, int i2 ) {
+   auto printConstraintsAndIndex = [&]( int64_t i1, int64_t i2 ) {
       fmt::print( "Differing Constraints: Problem 1: {:6} at index {:<5} vs ",
                   rnames1[i1], i1 );
       fmt::print( "Problem 2: {:6} at index {:<5}\n", rnames2[i2], i2 );
    };
 
-   auto findcol = []( int col, Vec<int> perm ) {
+   auto findcol = []( int64_t col, Vec<int64_t> perm ) {
       return std::distance( perm.begin(),
                             std::find( perm.begin(), perm.end(), col ) );
    };
 
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
-      int i1row = permrow1[i];
-      int i2row = permrow2[i];
+      int64_t i1row = permrow1[i];
+      int64_t i2row = permrow2[i];
 
       // Check Row flags for dissimilarities
       if( rflags1[i1row].test( RowFlag::kLhsInf ) !=
@@ -543,7 +543,7 @@ check_rows( const Problem<double>& prob1, const Problem<double>& prob2,
 
       // Assume: If there is different amounts of variables in constraint it is
       // not the same (not entirely true)
-      const int curr_ncols = row1.getLength();
+      const int64_t curr_ncols = row1.getLength();
       if( curr_ncols != row2.getLength() )
       {
          fmt::print( "Row has different amounts of variables!\n" );
@@ -551,20 +551,20 @@ check_rows( const Problem<double>& prob1, const Problem<double>& prob2,
          return false;
       }
 
-      const int* inds1 = row1.getIndices();
-      const int* inds2 = row2.getIndices();
+      const int64_t* inds1 = row1.getIndices();
+      const int64_t* inds2 = row2.getIndices();
       const double* vals1 = row1.getValues();
       const double* vals2 = row2.getValues();
 
-      for( int x = 0; x < curr_ncols; ++x )
+      for( int64_t x = 0; x < curr_ncols; ++x )
       {
-         int col = findcol( inds1[x], permcol1 );
+         int64_t col = findcol( inds1[x], permcol1 );
          coefmap[col] = vals1[x];
       }
 
-      for( int x = 0; x < curr_ncols; ++x )
+      for( int64_t x = 0; x < curr_ncols; ++x )
       {
-         int final_index2 = findcol( inds2[x], permcol2 );
+         int64_t final_index2 = findcol( inds2[x], permcol2 );
 
          // Check if same variables are defined for row
          if( coefmap.count( final_index2 ) == 0 )
@@ -599,7 +599,7 @@ static bool
 check_duplicates( const Problem<double>& prob1, const Problem<double>& prob2 )
 {
    // Check for columns
-   int ncols = prob1.getNCols();
+   int64_t ncols = prob1.getNCols();
 
    if( ncols != prob2.getNCols() )
    {
@@ -611,7 +611,7 @@ check_duplicates( const Problem<double>& prob1, const Problem<double>& prob2 )
    // Check for rows
    // First assume for being same you need to have same rows (even though not
    // true)
-   int nrows = prob1.getNRows();
+   int64_t nrows = prob1.getNRows();
 
    if( nrows != prob2.getNRows() )
    {
@@ -620,16 +620,16 @@ check_duplicates( const Problem<double>& prob1, const Problem<double>& prob2 )
       return false;
    }
 
-   std::pair<Vec<int>, Vec<int>> perms1 =
+   std::pair<Vec<int64_t>, Vec<int64_t>> perms1 =
        compute_row_and_column_permutation( prob1, true );
-   std::pair<Vec<int>, Vec<int>> perms2 =
+   std::pair<Vec<int64_t>, Vec<int64_t>> perms2 =
        compute_row_and_column_permutation( prob2, true );
 
-   Vec<int>& perm_col1 = perms1.second;
-   Vec<int>& perm_col2 = perms2.second;
+   Vec<int64_t>& perm_col1 = perms1.second;
+   Vec<int64_t>& perm_col2 = perms2.second;
 
-   Vec<int>& perm_row1 = perms1.first;
-   Vec<int>& perm_row2 = perms2.first;
+   Vec<int64_t>& perm_row1 = perms1.first;
+   Vec<int64_t>& perm_row2 = perms2.first;
 
    if( !check_cols( prob1, prob2, perm_col1, perm_col2 ) )
       return false;
@@ -644,21 +644,21 @@ check_duplicates( const Problem<double>& prob1, const Problem<double>& prob2 )
 static uint64_t
 compute_instancehash( const Problem<double>& prob )
 {
-   const int MAX_HASH_ITERS = 5;
+   const int64_t MAX_HASH_ITERS = 5;
    const ConstraintMatrix<double> cm = prob.getConstraintMatrix();
 
-   int nrows = cm.getNRows();
-   int ncols = cm.getNCols();
-   int nnz = cm.getNnz();
+   int64_t nrows = cm.getNRows();
+   int64_t ncols = cm.getNCols();
+   int64_t nnz = cm.getNnz();
 
-   auto obj = [&]( int col ) {
+   auto obj = [&]( int64_t col ) {
       double tmp = prob.getObjective().coefficients[col];
       uint64_t val;
       std::memcpy( &val, &tmp, sizeof( double ) );
       return val;
    };
 
-   auto lb = [&]( int col ) {
+   auto lb = [&]( int64_t col ) {
       double tmp = prob.getColFlags()[col].test( ColFlag::kLbInf )
                        ? std::numeric_limits<double>::lowest()
                        : prob.getLowerBounds()[col];
@@ -667,7 +667,7 @@ compute_instancehash( const Problem<double>& prob )
       return val;
    };
 
-   auto ub = [&]( int col ) {
+   auto ub = [&]( int64_t col ) {
       double tmp = prob.getColFlags()[col].test( ColFlag::kUbInf )
                        ? std::numeric_limits<double>::max()
                        : prob.getUpperBounds()[col];
@@ -676,12 +676,12 @@ compute_instancehash( const Problem<double>& prob )
       return val;
    };
 
-   auto col_is_integral = [&]( int col ) {
+   auto col_is_integral = [&]( int64_t col ) {
       return static_cast<uint64_t>(
           prob.getColFlags()[col].test( ColFlag::kIntegral ) );
    };
 
-   auto lhs = [&]( int row ) {
+   auto lhs = [&]( int64_t row ) {
       double tmp = cm.getRowFlags()[row].test( RowFlag::kLhsInf )
                        ? std::numeric_limits<double>::lowest()
                        : cm.getLeftHandSides()[row];
@@ -690,7 +690,7 @@ compute_instancehash( const Problem<double>& prob )
       return val;
    };
 
-   auto rhs = [&]( int row ) {
+   auto rhs = [&]( int64_t row ) {
       double tmp = cm.getRowFlags()[row].test( RowFlag::kRhsInf )
                        ? std::numeric_limits<double>::max()
                        : cm.getRightHandSides()[row];
@@ -705,16 +705,16 @@ compute_instancehash( const Problem<double>& prob )
    colhashes.resize( ncols + 2 );
    rowhashes.resize( nrows + 4 );
 
-   const int LHS = ncols;
-   const int RHS = ncols + 1;
+   const int64_t LHS = ncols;
+   const int64_t RHS = ncols + 1;
 
    colhashes[LHS] = UINT64_MAX;
    colhashes[RHS] = UINT64_MAX - 1;
 
-   const int OBJ = nrows;
-   const int INTEGRAL = nrows + 1;
-   const int LB = nrows + 2;
-   const int UB = nrows + 3;
+   const int64_t OBJ = nrows;
+   const int64_t INTEGRAL = nrows + 1;
+   const int64_t LB = nrows + 2;
+   const int64_t UB = nrows + 3;
 
    rowhashes[OBJ] = UINT64_MAX - 2;
    rowhashes[INTEGRAL] = UINT64_MAX - 3;
@@ -723,16 +723,16 @@ compute_instancehash( const Problem<double>& prob )
 
    // Datastructure to save coefficients columnwise
    Vec<std::pair<uint64_t, int>> csrvals;
-   Vec<int> csrstarts;
+   Vec<int64_t> csrstarts;
    csrstarts.resize( nrows + 1 );
    csrvals.reserve( nnz + 2 * nrows );
 
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       csrstarts[i] = csrvals.size();
 
       auto rowvec = cm.getRowCoefficients( i );
-      for( int k = 0; k < rowvec.getLength(); ++k )
+      for( int64_t k = 0; k < rowvec.getLength(); ++k )
       {
          uint64_t coef;
          std::memcpy( &coef, rowvec.getValues() + k, sizeof( double ) );
@@ -747,16 +747,16 @@ compute_instancehash( const Problem<double>& prob )
 
    // Datastructure to save coefficients rowwise
    Vec<std::pair<uint64_t, int>> cscvals;
-   Vec<int> cscstarts;
+   Vec<int64_t> cscstarts;
    cscstarts.resize( ncols + 1 );
    cscvals.reserve( nnz + 4 * ncols );
 
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
    {
       cscstarts[i] = cscvals.size();
 
       auto colvec = cm.getColumnCoefficients( i );
-      for( int k = 0; k < colvec.getLength(); ++k )
+      for( int64_t k = 0; k < colvec.getLength(); ++k )
       {
          uint64_t coef;
          std::memcpy( &coef, colvec.getValues() + k, sizeof( double ) );
@@ -784,23 +784,23 @@ compute_instancehash( const Problem<double>& prob )
    };
 
    // Prepare permutation to not compute all hashes in each step newly
-   Vec<int> colperm;
+   Vec<int64_t> colperm;
    colperm.resize( ncols );
-   for( int i = 0; i < ncols; ++i )
+   for( int64_t i = 0; i < ncols; ++i )
       colperm[i] = i;
 
-   Vec<int> rowperm;
+   Vec<int64_t> rowperm;
    rowperm.resize( nrows );
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
       rowperm[i] = i;
 
-   int iters = 0;
+   int64_t iters = 0;
 
-   int ncols2 = ncols;
+   int64_t ncols2 = ncols;
    size_t lastncols = -1;
    HashMap<uint64_t, size_t> distinct_col_hashes( ncols );
 
-   int nrows2 = nrows;
+   int64_t nrows2 = nrows;
    size_t lastnrows = -1;
    HashMap<uint64_t, size_t> distinct_row_hashes( nrows );
 
@@ -808,17 +808,17 @@ compute_instancehash( const Problem<double>& prob )
    while( nrows2 != 0 && iters <= MAX_HASH_ITERS )
    {
       tbb::parallel_for(
-          tbb::blocked_range<int>( 0, nrows2 ),
-          [&]( const tbb::blocked_range<int>& r ) {
-             for( int i = r.begin(); i != r.end(); ++i )
+          tbb::blocked_range<int64_t>( 0, nrows2 ),
+          [&]( const tbb::blocked_range<int64_t>& r ) {
+             for( int64_t i = r.begin(); i != r.end(); ++i )
              {
-                int row = rowperm[i];
-                int start = csrstarts[row];
-                int end = csrstarts[row + 1];
+                int64_t row = rowperm[i];
+                int64_t start = csrstarts[row];
+                int64_t end = csrstarts[row + 1];
                 pdqsort( &csrvals[start], &csrvals[end], comp_rowvals );
 
                 Hasher<uint64_t> hasher( end - start );
-                for( int k = start; k < end; ++k )
+                for( int64_t k = start; k < end; ++k )
                 {
                    hasher.addValue( csrvals[k].first );
                    hasher.addValue( colhashes[csrvals[k].second] );
@@ -833,7 +833,7 @@ compute_instancehash( const Problem<double>& prob )
       for( size_t i = 0; i < nrows2; ++i )
          distinct_row_hashes[rowhashes[rowperm[i]]] += 1;
 
-      pdqsort( rowperm.begin(), rowperm.begin() + nrows2, [&]( int a, int b ) {
+      pdqsort( rowperm.begin(), rowperm.begin() + nrows2, [&]( int64_t a, int64_t b ) {
          return std::make_tuple( -distinct_row_hashes[rowhashes[a]],
                                  rowhashes[a], a ) <
                 std::make_tuple( -distinct_row_hashes[rowhashes[b]],
@@ -869,17 +869,17 @@ compute_instancehash( const Problem<double>& prob )
          break;
 
       tbb::parallel_for(
-          tbb::blocked_range<int>( 0, ncols2 ),
-          [&]( const tbb::blocked_range<int>& r ) {
-             for( int i = r.begin(); i != r.end(); ++i )
+          tbb::blocked_range<int64_t>( 0, ncols2 ),
+          [&]( const tbb::blocked_range<int64_t>& r ) {
+             for( int64_t i = r.begin(); i != r.end(); ++i )
              {
-                int col = colperm[i];
-                int start = cscstarts[col];
-                int end = cscstarts[col + 1];
+                int64_t col = colperm[i];
+                int64_t start = cscstarts[col];
+                int64_t end = cscstarts[col + 1];
                 pdqsort( &cscvals[start], &cscvals[end], comp_colvals );
 
                 Hasher<uint64_t> hasher( end - start );
-                for( int k = start; k < end; ++k )
+                for( int64_t k = start; k < end; ++k )
                 {
                    hasher.addValue( cscvals[k].first );
                    hasher.addValue( rowhashes[cscvals[k].second] );
@@ -894,7 +894,7 @@ compute_instancehash( const Problem<double>& prob )
       for( size_t i = 0; i < ncols2; ++i )
          distinct_col_hashes[colhashes[colperm[i]]] += 1;
 
-      pdqsort( colperm.begin(), colperm.begin() + ncols2, [&]( int a, int b ) {
+      pdqsort( colperm.begin(), colperm.begin() + ncols2, [&]( int64_t a, int64_t b ) {
          return std::make_pair( -distinct_col_hashes[colhashes[a]],
                                 colhashes[a] ) <
                 std::make_pair( -distinct_col_hashes[colhashes[b]],

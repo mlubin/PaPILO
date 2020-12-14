@@ -104,7 +104,7 @@ class PresolveMethod
    virtual ~PresolveMethod() {}
 
    virtual void
-   compress( const Vec<int>& rowmap, const Vec<int>& colmap )
+   compress( const Vec<int64_t>& rowmap, const Vec<int64_t>& colmap )
    {
    }
 
@@ -230,7 +230,7 @@ class PresolveMethod
    }
 
    bool
-   runInRound( int roundCounter )
+   runInRound( int64_t roundCounter )
    {
       assert( roundCounter < 4 );
 

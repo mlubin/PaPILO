@@ -39,16 +39,16 @@ class Sparsify : public PresolveMethod<REAL>
 {
    double maxscale = 1000;
 
-   using HitCount = uint16_t;
+   using HitCount = int64_t;
 
    struct SparsifyData
    {
       Vec<HitCount> candrowhits;
-      Vec<int> candrows;
+      Vec<int64_t> candrows;
       Vec<std::pair<int, REAL>> sparsify;
       Vec<std::tuple<int, int, int>> reductionBuffer;
 
-      SparsifyData( int nrows ) : candrowhits( nrows )
+      SparsifyData( int64_t nrows ) : candrowhits( nrows )
       {
          candrows.reserve( nrows );
       }
@@ -110,7 +110,7 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
    const auto& nrows = consmatrix.getNRows();
    const auto& ncols = consmatrix.getNCols();
 
-   auto isBinaryCol = [&]( int col ) {
+   auto isBinaryCol = [&]( int64_t col ) {
       return cflags[col].test( ColFlag::kIntegral ) &&
              !cflags[col].test( ColFlag::kUnbounded ) &&
              lower_bounds[col] == 0 && upper_bounds[col] == 1;
@@ -130,10 +130,10 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
    // add a map that tells if the implied bounds of a col was already
    // computed and failed (using dynamicbitset)
 
-   Vec<int> equalities;
+   Vec<int64_t> equalities;
    equalities.reserve( nrows );
 
-   for( int i = 0; i < nrows; ++i )
+   for( int64_t i = 0; i < nrows; ++i )
    {
       if( rflags[i].test( RowFlag::kRedundant ) ||
           !rflags[i].test( RowFlag::kEquation ) || rowsize[i] <= 1 ||
@@ -150,8 +150,8 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
        [nrows]() { return SparsifyData( nrows ); } );
 
    tbb::parallel_for(
-       tbb::blocked_range<int>( 0, static_cast<int>( equalities.size() ) ),
-       [&]( const tbb::blocked_range<int>& r ) {
+       tbb::blocked_range<int64_t>( 0, static_cast<int64_t>( equalities.size() ) ),
+       [&]( const tbb::blocked_range<int64_t>& r ) {
           std::size_t sparsifyStart;
 
           SparsifyData& localData = sparsifyData.local();
@@ -161,17 +161,17 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
           auto& sparsify = localData.sparsify;
           auto& reductionBuffer = localData.reductionBuffer;
 
-          for( int i = r.begin(); i != r.end(); ++i )
+          for( int64_t i = r.begin(); i != r.end(); ++i )
           {
-             int eqrow = equalities[i];
+             int64_t eqrow = equalities[i];
 
              auto rowvec = consmatrix.getRowCoefficients( eqrow );
 
-             int eqlen = rowvec.getLength();
-             const int* eqcols = rowvec.getIndices();
+             int64_t eqlen = rowvec.getLength();
+             const int64_t* eqcols = rowvec.getIndices();
              bool cancelint = true;
-             int minhits = eqlen - 1;
-             int nint = 0;
+             int64_t minhits = eqlen - 1;
+             int64_t nint = 0;
              Message::debug(
                  this,
                  "trying sparsification with equality row {} of length {}\n",
@@ -179,12 +179,12 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
 
              if( problem.getNumIntegralCols() != 0 )
              {
-                int ncont = 0;
-                int nbin = 0;
+                int64_t ncont = 0;
+                int64_t nbin = 0;
 
-                for( int i = 0; i != eqlen; ++i )
+                for( int64_t i = 0; i != eqlen; ++i )
                 {
-                   int col = eqcols[i];
+                   int64_t col = eqcols[i];
 
                    if( !cflags[col].test( ColFlag::kIntegral ) )
                       ++ncont;
@@ -197,12 +197,12 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                    }
 
                    auto colvec = consmatrix.getColumnCoefficients( col );
-                   const int* colrows = colvec.getIndices();
-                   int collen = colvec.getLength();
+                   const int64_t* colrows = colvec.getIndices();
+                   int64_t collen = colvec.getLength();
 
-                   for( int j = 0; j != collen; ++j )
+                   for( int64_t j = 0; j != collen; ++j )
                    {
-                      int row = colrows[j];
+                      int64_t row = colrows[j];
 
                       if( row == eqrow )
                          continue;
@@ -222,7 +222,7 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                 if( nbin + nint == 0 )
                 {
                    auto it = std::remove_if( candrows.begin(), candrows.end(),
-                                             [&]( int r ) {
+                                             [&]( int64_t r ) {
                                                 if( candrowhits[r] < ncont - 1 )
                                                 {
                                                    candrowhits[r] = 0;
@@ -238,7 +238,7 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                 else
                 {
                    auto it = std::remove_if(
-                       candrows.begin(), candrows.end(), [&]( int r ) {
+                       candrows.begin(), candrows.end(), [&]( int64_t r ) {
                           if( candrowhits[r] < nbin + ncont - 1 )
                           {
                              candrowhits[r] = 0;
@@ -257,9 +257,9 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
 
              if( problem.getNumIntegralCols() == 0 || nint != 0 )
              {
-                for( int i = 0; i != eqlen; ++i )
+                for( int64_t i = 0; i != eqlen; ++i )
                 {
-                   int col = eqcols[i];
+                   int64_t col = eqcols[i];
 
                    if( problem.getNumIntegralCols() != 0 &&
                        ( !cflags[col].test( ColFlag::kIntegral ) ||
@@ -267,12 +267,12 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                       continue;
 
                    auto colvec = consmatrix.getColumnCoefficients( col );
-                   const int* colrows = colvec.getIndices();
-                   int collen = colvec.getLength();
+                   const int64_t* colrows = colvec.getIndices();
+                   int64_t collen = colvec.getLength();
 
-                   for( int j = 0; j != collen; ++j )
+                   for( int64_t j = 0; j != collen; ++j )
                    {
-                      int row = colrows[j];
+                      int64_t row = colrows[j];
 
                       if( row == eqrow )
                          continue;
@@ -290,7 +290,7 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                 }
 
                 auto it = std::remove_if( candrows.begin(), candrows.end(),
-                                          [&]( int r ) {
+                                          [&]( int64_t r ) {
                                              if( candrowhits[r] < minhits )
                                              {
                                                 candrowhits[r] = 0;
@@ -310,17 +310,17 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                 sparsifyStart = sparsify.size();
                 sparsify.reserve( sparsifyStart + candrows.size() );
 
-                for( int candrow : candrows )
+                for( int64_t candrow : candrows )
                 {
                    auto candrowvec = consmatrix.getRowCoefficients( candrow );
-                   const int* candcols = candrowvec.getIndices();
+                   const int64_t* candcols = candrowvec.getIndices();
                    const REAL* candvals = candrowvec.getValues();
-                   int candlen = candrowvec.getLength();
+                   int64_t candlen = candrowvec.getLength();
 
                    if( !cancelint && candrowhits[candrow] != eqlen )
                    {
                       bool skip = false;
-                      for( int j = 0; j != candlen; ++j )
+                      for( int64_t j = 0; j != candlen; ++j )
                       {
                          if( cflags[candcols[j]].test( ColFlag::kIntegral ) )
                          {
@@ -333,10 +333,10 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                          continue;
                    }
 
-                   int i = 0;
-                   int j = 0;
+                   int64_t i = 0;
+                   int64_t j = 0;
 
-                   int currcancel = 0;
+                   int64_t currcancel = 0;
 
                    while( i != eqlen && j != candlen )
                    {
@@ -368,17 +368,17 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
 
                    pdqsort( scales.begin(), scales.end() );
 
-                   int bestcancel = 0;
+                   int64_t bestcancel = 0;
                    REAL bestscale = 0;
 
-                   for( int k = 0; k != eqlen - 1; ++k )
+                   for( int64_t k = 0; k != eqlen - 1; ++k )
                    {
                       if( scales[k] == 0 || abs( scales[k] ) > maxscale )
                          continue;
 
-                      int ncancel = currcancel;
+                      int64_t ncancel = currcancel;
 
-                      for( int j = k + 1; j != eqlen; ++j )
+                      for( int64_t j = k + 1; j != eqlen; ++j )
                       {
                          if( num.isEq( scales[k], scales[j] ) )
                             ++ncancel;
@@ -405,7 +405,7 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
                    }
                 }
 
-                for( int r : candrows )
+                for( int64_t r : candrows )
                    candrowhits[r] = 0;
                 candrows.clear();
 
@@ -416,7 +416,7 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
           }
        } );
 
-   int nreductions = 0;
+   int64_t nreductions = 0;
    sparsifyData.combine_each( [&]( const SparsifyData& localData ) {
       nreductions += localData.reductionBuffer.size();
    } );
@@ -433,24 +433,24 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
          for( const std::tuple<int, int, int>& reductionTuple :
               localData.reductionBuffer )
          {
-            int eqrow = std::get<0>( reductionTuple );
-            int start = std::get<1>( reductionTuple );
-            int end = std::get<2>( reductionTuple );
+            int64_t eqrow = std::get<0>( reductionTuple );
+            int64_t start = std::get<1>( reductionTuple );
+            int64_t end = std::get<2>( reductionTuple );
             reductionData.emplace_back( eqrow, end - start,
                                         &localData.sparsify[start] );
          }
       } );
 
-      const Vec<int>& rowperm = problemUpdate.getRandomRowPerm();
+      const Vec<int64_t>& rowperm = problemUpdate.getRandomRowPerm();
 
       pdqsort( reductionData.begin(), reductionData.end(),
                [&]( const std::tuple<int, int, std::pair<int, REAL>*>& a,
                     const std::tuple<int, int, std::pair<int, REAL>*>& b ) {
-                  int eqrowA = std::get<0>( a );
-                  int eqrowB = std::get<0>( b );
+                  int64_t eqrowA = std::get<0>( a );
+                  int64_t eqrowB = std::get<0>( b );
 
-                  int numCandsA = std::get<1>( a );
-                  int numCandsB = std::get<1>( b );
+                  int64_t numCandsA = std::get<1>( a );
+                  int64_t numCandsB = std::get<1>( b );
 
                   return std::make_tuple( rowsize[eqrowA], -numCandsA,
                                           rowperm[eqrowA] ) <
@@ -461,8 +461,8 @@ Sparsify<REAL>::execute( const Problem<REAL>& problem,
       for( const std::tuple<int, int, std::pair<int, REAL>*>& reductionTuple :
            reductionData )
       {
-         int eqrow = std::get<0>( reductionTuple );
-         int num = std::get<1>( reductionTuple );
+         int64_t eqrow = std::get<0>( reductionTuple );
+         int64_t num = std::get<1>( reductionTuple );
          const std::pair<int, REAL>* sparsify = std::get<2>( reductionTuple );
 
          TransactionGuard<REAL> tg{ reductions };

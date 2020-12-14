@@ -54,14 +54,14 @@ convMPS( const Problem<double>& prob )
     */
 
    // Get all relevant data
-   int nCols = prob.getNCols();
-   int nRows = prob.getNRows();
+   int64_t nCols = prob.getNCols();
+   int64_t nRows = prob.getNRows();
    const Objective<double>& obj = prob.getObjective();
    const ConstraintMatrix<double>& cm = prob.getConstraintMatrix();
    Vec<double> rowlhs = cm.getLeftHandSides();
    Vec<double> rowrhs = cm.getRightHandSides();
    Vec<RowFlags> row_flags = cm.getRowFlags();
-   const int nnz = cm.getNnz();
+   const int64_t nnz = cm.getNnz();
    const VariableDomains<double> vd = prob.getVariableDomains();
    const Vec<std::string> cnames = prob.getVariableNames();
    const Vec<std::string> rnames = prob.getConstraintNames();
@@ -75,66 +75,66 @@ convMPS( const Problem<double>& prob )
    fmt::print( "}};\n" );
    // Columns
    fmt::print( "   Vec<double> lbs{{" );
-   for( int c = 0; c < nCols; ++c )
+   for( int64_t c = 0; c < nCols; ++c )
       fmt::print( "{},", vd.lower_bounds[c] );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<uint8_t> lbInf{{" );
-   for( int c = 0; c < nCols; ++c )
+   for( int64_t c = 0; c < nCols; ++c )
       fmt::print( "{},", vd.flags[c].test( ColFlag::kLbInf ) ? 1 : 0 );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<double> ubs{{" );
-   for( int c = 0; c < nCols; ++c )
+   for( int64_t c = 0; c < nCols; ++c )
       fmt::print( "{},", vd.upper_bounds[c] );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<uint8_t> ubInf{{" );
-   for( int c = 0; c < nCols; ++c )
+   for( int64_t c = 0; c < nCols; ++c )
       fmt::print( "{},", vd.flags[c].test( ColFlag::kUbInf ) ? 1 : 0 );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<uint8_t> isIntegral{{" );
-   for( int c = 0; c < nCols; ++c )
+   for( int64_t c = 0; c < nCols; ++c )
       fmt::print( "{},", vd.flags[c].test( ColFlag::kIntegral ) ? 1 : 0 );
    fmt::print( "}};\n" );
    // Rows
    fmt::print( "   Vec<uint8_t> lhsIsInf{{" );
-   for( int r = 0; r < nRows; ++r )
+   for( int64_t r = 0; r < nRows; ++r )
       fmt::print( "{},", row_flags[r].test( RowFlag::kLhsInf ) ? 1 : 0 );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<double> lhs{{" );
-   for( int r = 0; r < nRows; ++r )
+   for( int64_t r = 0; r < nRows; ++r )
       fmt::print( "{},", rowlhs[r] );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<uint8_t> rhsIsInf{{" );
-   for( int r = 0; r < nRows; ++r )
+   for( int64_t r = 0; r < nRows; ++r )
       fmt::print( "{},", row_flags[r].test( RowFlag::kRhsInf ) ? 1 : 0 );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<double> rhs{{" );
-   for( int r = 0; r < nRows; ++r )
+   for( int64_t r = 0; r < nRows; ++r )
       fmt::print( "{},", rowrhs[r] );
    fmt::print( "}};\n" );
    // Entries ( Nonzero Matrix values )
    fmt::print( "   Vec<std::tuple<int, int, double>> entries{{" );
-   for( int r = 0; r < nRows; ++r )
+   for( int64_t r = 0; r < nRows; ++r )
    {
       const SparseVectorView<double>& rc = cm.getRowCoefficients( r );
-      const int len = rc.getLength();
-      const int* indices = rc.getIndices();
+      const int64_t len = rc.getLength();
+      const int64_t* indices = rc.getIndices();
       const double* vals = rc.getValues();
-      for( int i = 0; i < len; ++i )
+      for( int64_t i = 0; i < len; ++i )
          fmt::print( "std::tuple<int, int, double>{{{},{},{}}},", r,
                      *( indices + i ), *( vals + i ) );
    }
    fmt::print( "}};\n" );
    // Names
    fmt::print( "   Vec<std::string> rnames{{" );
-   for( int r = 0; r < nRows; ++r )
+   for( int64_t r = 0; r < nRows; ++r )
       fmt::print( "\"{}\",", rnames[r] );
    fmt::print( "}};\n" );
    fmt::print( "   Vec<std::string> cnames{{" );
-   for( int c = 0; c < nCols; ++c )
+   for( int64_t c = 0; c < nCols; ++c )
       fmt::print( "\"{}\",", cnames[c] );
    fmt::print( "}};\n" );
    // Set problem Builder
-   fmt::print( "   int nCols = {}; int nRows = {};\n", nCols, nRows );
+   fmt::print( "   int64_t nCols = {}; int64_t nRows = {};\n", nCols, nRows );
    fmt::print( "   ProblemBuilder<double> pb;\n" );
    fmt::print( "   pb.reserve( {},{},{} );\n", nnz, nRows, nCols );
    fmt::print( "   pb.setNumRows( nRows );\n" );

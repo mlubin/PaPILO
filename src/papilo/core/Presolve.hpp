@@ -221,7 +221,7 @@ class Presolve
    evaluateResults();
 
    std::pair<int, int>
-   applyReductions( int p, const Reductions<REAL>& reductions,
+   applyReductions( int64_t p, const Reductions<REAL>& reductions,
                     ProblemUpdate<REAL>& probUpdate );
 
    void
@@ -248,11 +248,11 @@ class Presolve
    Vec<PresolveStatus> results;
    Vec<std::unique_ptr<PresolveMethod<REAL>>> presolvers;
    Vec<Reductions<REAL>> reductions;
-   int roundCounter;
+   int64_t roundCounter;
 
    Vec<std::pair<const Reduction<REAL>*, const Reduction<REAL>*>>
        postponedReductions;
-   Vec<int> postponedReductionToPresolver;
+   Vec<int64_t> postponedReductionToPresolver;
 
    // settings for presolve behavior
    Num<REAL> num;
@@ -266,7 +266,7 @@ class Presolve
 
    Vec<std::pair<int, int>> presolverStats;
    bool lastRoundReduced;
-   int nunsuccessful;
+   int64_t nunsuccessful;
    bool rundelayed;
 };
 
@@ -291,21 +291,21 @@ Presolve<REAL>::evaluateResults()
 
 template <typename REAL>
 std::pair<int, int>
-Presolve<REAL>::applyReductions( int p, const Reductions<REAL>& reductions,
+Presolve<REAL>::applyReductions( int64_t p, const Reductions<REAL>& reductions,
                                  ProblemUpdate<REAL>& probUpdate )
 {
-   int k = 0;
+   int64_t k = 0;
    ApplyResult result;
-   int nbtsxAppliedStart = stats.ntsxapplied;
-   int nbtsxTotal = 0;
+   int64_t nbtsxAppliedStart = stats.ntsxapplied;
+   int64_t nbtsxTotal = 0;
 
    const auto& reds = reductions.getReductions();
    const auto& tsx = reductions.getTransactions();
 
    for( const auto& transaction : reductions.getTransactions() )
    {
-      int start = transaction.start;
-      int end = transaction.end;
+      int64_t start = transaction.start;
+      int64_t end = transaction.end;
 
       for( ; k != start; ++k )
       {
@@ -377,11 +377,11 @@ Presolve<REAL>::applyPostponed( ProblemUpdate<REAL>& probUpdate )
    probUpdate.setPostponeSubstitutions( false );
 
    // apply all postponed reductions
-   for( int presolver = 0; presolver != presolvers.size(); ++presolver )
+   for( int64_t presolver = 0; presolver != presolvers.size(); ++presolver )
    {
-      int first = postponedReductionToPresolver[presolver];
-      int last = postponedReductionToPresolver[presolver + 1];
-      for( int i = first; i != last; ++i )
+      int64_t first = postponedReductionToPresolver[presolver];
+      int64_t last = postponedReductionToPresolver[presolver + 1];
+      for( int64_t i = first; i != last; ++i )
       {
          const auto& ptrpair = postponedReductions[i];
 
@@ -603,7 +603,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
       Vec<REAL>& lhsVals = constraintMatrix.getLeftHandSides();
       Vec<REAL>& rhsVals = constraintMatrix.getRightHandSides();
       Vec<RowFlags>& rflags = constraintMatrix.getRowFlags();
-      const Vec<int>& rowsize = constraintMatrix.getRowSizes();
+      const Vec<int64_t>& rowsize = constraintMatrix.getRowSizes();
       Vec<RowActivity<REAL>>& rowActivities = problem.getRowActivities();
 
       msg.info( "\nstarting presolve of problem {}:\n", problem.getName() );
@@ -868,12 +868,12 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
               presolveOptions.detectlindep == 1 ) ) )
       {
          ConstraintMatrix<REAL>& consMatrix = problem.getConstraintMatrix();
-         Vec<int> equations;
+         Vec<int64_t> equations;
 
          equations.reserve( problem.getNRows() );
          size_t eqnnz = 0;
 
-         for( int i = 0; i != problem.getNRows(); ++i )
+         for( int64_t i = 0; i != problem.getNRows(); ++i )
          {
             if( rflags[i].test( RowFlag::kRedundant ) ||
                 !rflags[i].test( RowFlag::kEquation ) )
@@ -892,7 +892,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
                depRows.addRow( i, consMatrix.getRowCoefficients( equations[i] ),
                                REAL( rhsVals[equations[i]] ) );
 
-            Vec<int> dependentEqs;
+            Vec<int64_t> dependentEqs;
             double factorTime = 0.0;
             msg.info( "found {} equations, checking for linear dependency\n",
                       equations.size() );
@@ -906,7 +906,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
 
             if( !dependentEqs.empty() )
             {
-               for( int dependentEq : dependentEqs )
+               for( int64_t dependentEq : dependentEqs )
                {
                   probUpdate.markRowRedundant( equations[dependentEq] );
                }
@@ -916,17 +916,17 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
 
          if( presolveOptions.dualreds == 2 )
          {
-            Vec<int> freeCols;
+            Vec<int64_t> freeCols;
             freeCols.reserve( problem.getNCols() );
             size_t freeColNnz = 0;
 
             const Vec<ColFlags>& cflags = problem.getColFlags();
-            const Vec<int>& colsize = problem.getColSizes();
+            const Vec<int64_t>& colsize = problem.getColSizes();
             const Vec<REAL>& obj = problem.getObjective().coefficients;
             const Vec<REAL>& lbs = problem.getLowerBounds();
             const Vec<REAL>& ubs = problem.getUpperBounds();
 
-            for( int col = 0; col != problem.getNCols(); ++col )
+            for( int64_t col = 0; col != problem.getNCols(); ++col )
             {
                if( cflags[col].test( ColFlag::kInactive, ColFlag::kIntegral ) ||
                    !cflags[col].test( ColFlag::kLbInf ) ||
@@ -947,7 +947,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
                       i, consMatrix.getColumnCoefficients( freeCols[i] ),
                       obj[freeCols[i]] );
 
-               Vec<int> dependentFreeCols;
+               Vec<int64_t> dependentFreeCols;
                double factorTime = 0.0;
                msg.info(
                    "found {} free columns, checking for linear dependency\n",
@@ -964,7 +964,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
 
                if( !dependentFreeCols.empty() )
                {
-                  for( int dependentFreeCol : dependentFreeCols )
+                  for( int64_t dependentFreeCol : dependentFreeCols )
                      probUpdate.fixCol( freeCols[dependentFreeCol], 0 );
 
                   probUpdate.flush();
@@ -984,8 +984,8 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
       {
          if( presolveOptions.boundrelax && problem.getNumIntegralCols() == 0 )
          {
-            int nremoved;
-            int nnewfreevars;
+            int64_t nremoved;
+            int64_t nnewfreevars;
             // todo check if lp solver is simplex solver / add options
             std::tie( nremoved, nnewfreevars ) =
                 probUpdate.removeRedundantBounds();
@@ -1011,7 +1011,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
             assert( problem.getNCols() != 0 && problem.getNRows() != 0 );
             Components components;
 
-            int ncomponents = components.detectComponents( problem );
+            int64_t ncomponents = components.detectComponents( problem );
 
             if( ncomponents > 1 )
             {
@@ -1033,11 +1033,11 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
                Vec<uint8_t> componentSolved( ncomponents );
 
                tbb::parallel_for(
-                   tbb::blocked_range<int>( 0, ncomponents - 1 ),
+                   tbb::blocked_range<int64_t>( 0, ncomponents - 1 ),
                    [this, &components, &solution, &problem, &result, &compInfo,
                     &componentSolved,
-                    &timer]( const tbb::blocked_range<int>& r ) {
-                      for( int i = r.begin(); i != r.end(); ++i )
+                    &timer]( const tbb::blocked_range<int64_t>& r ) {
+                      for( int64_t i = r.begin(); i != r.end(); ++i )
                       {
                          if( compInfo[i].nintegral == 0 )
                          {
@@ -1083,7 +1083,7 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
                             solver->setGapLimit( 0 );
                             solver->setNodeLimit(
                                 problem.getConstraintMatrix().getNnz() /
-                                std::max( compInfo[i].nnonz, 1 ) );
+                                std::max( compInfo[i].nnonz, int64_t{1} ) );
 
                             solver->setUp( problem,
                                            result.postsolve.origrow_mapping,
@@ -1117,33 +1117,33 @@ Presolve<REAL>::apply( Problem<REAL>& problem )
                    },
                    tbb::simple_partitioner() );
 
-               int nsolved = 0;
+               int64_t nsolved = 0;
 
-               int oldndelcols = stats.ndeletedcols;
-               int oldndelrows = stats.ndeletedrows;
+               int64_t oldndelcols = stats.ndeletedcols;
+               int64_t oldndelrows = stats.ndeletedrows;
 
                auto& lbs = problem.getLowerBounds();
                auto& ubs = problem.getUpperBounds();
-               for( int i = 0; i != ncomponents; ++i )
+               for( int64_t i = 0; i != ncomponents; ++i )
                {
                   if( componentSolved[i] )
                   {
                      ++nsolved;
 
-                     const int* compcols = components.getComponentsCols( i );
-                     int numcompcols = components.getComponentsNumCols( i );
+                     const int64_t* compcols = components.getComponentsCols( i );
+                     int64_t numcompcols = components.getComponentsNumCols( i );
 
-                     for( int j = 0; j != numcompcols; ++j )
+                     for( int64_t j = 0; j != numcompcols; ++j )
                      {
                         lbs[compcols[j]] = solution.primal[compcols[j]];
                         ubs[compcols[j]] = solution.primal[compcols[j]];
                         probUpdate.markColFixed( compcols[j] );
                      }
 
-                     const int* comprows = components.getComponentsRows( i );
-                     int numcomprows = components.getComponentsNumRows( i );
+                     const int64_t* comprows = components.getComponentsRows( i );
+                     int64_t numcomprows = components.getComponentsNumRows( i );
 
-                     for( int j = 0; j != numcomprows; ++j )
+                     for( int64_t j = 0; j != numcomprows; ++j )
                      {
                         probUpdate.markRowRedundant( comprows[j] );
                      }

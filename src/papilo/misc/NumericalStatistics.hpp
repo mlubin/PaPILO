@@ -63,8 +63,8 @@ class NumericalStatistics
       const Vec<REAL>& lhs = cm.getLeftHandSides();
       const Vec<REAL>& rhs = cm.getRightHandSides();
 
-      int nrows = cm.getNRows();
-      int ncols = cm.getNCols();
+      int64_t nrows = cm.getNRows();
+      int64_t ncols = cm.getNCols();
 
       stats.matrixMin = 0.0;
       stats.matrixMax = 0.0;
@@ -74,7 +74,7 @@ class NumericalStatistics
       bool rhsMinSet = false;
 
       // Row dynamism, matrixMin/Max, RHS
-      for( int r = 0; r < nrows; ++r )
+      for( int64_t r = 0; r < nrows; ++r )
       {
          // matrixMin/Max
          const SparseVectorView<REAL>& row = cm.getRowCoefficients( r );
@@ -136,7 +136,7 @@ class NumericalStatistics
       bool boundsMinSet = false;
 
       // Column dynamism, Variable Bounds
-      for( int c = 0; c < ncols; ++c )
+      for( int64_t c = 0; c < ncols; ++c )
       {
          // Column dynamism
          const SparseVectorView<REAL>& col = cm.getColumnCoefficients( c );
@@ -207,7 +207,7 @@ class NumericalStatistics
       stats.objMin = 0.0;
       bool objMinSet = false;
 
-      for( int i = 0; i < obj.coefficients.size(); ++i )
+      for( int64_t i = 0; i < obj.coefficients.size(); ++i )
       {
          if( obj.coefficients[i] != 0 )
          {
